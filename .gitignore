@@ -1,0 +1,60 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+*.spec.bak
+
+# --- Node / Frontend ---
+node_modules/
+frontend/dist/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+
+# --- Tauri / Rust ---
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
+
+# --- Données utilisateur & runtime (jamais versionnées) ---
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+logs/
+*.log
+screenshots/*
+!screenshots/.gitkeep
+datasets/*
+!datasets/.gitkeep
+
+# --- Release / packaging ---
+releases/*
+!releases/.gitkeep
+*.exe
+*.msi
+*.nsis
+
+# --- Secrets (ne jamais committer) ---
+.env
+.env.*
+*.key
+*.pem
+*.p12
+tauri.key
+tauri.key.pub.bak
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
