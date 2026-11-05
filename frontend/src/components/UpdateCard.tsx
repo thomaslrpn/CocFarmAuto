@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Download, Loader2, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FlaskConical, Loader2, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
 import { useUpdater, type UpdaterState } from "../hooks/useUpdater";
 import type { InstallStep } from "../services/updater";
 import { Card } from "./Card";
@@ -107,6 +107,13 @@ function UpdateStatus({ updater }: { updater: UpdaterState }) {
           <Line icon={<Sparkles className="size-4 text-accent" />}>
             Version <strong>{update.version}</strong> disponible (installée : {update.currentVersion}).
           </Line>
+          {isBetaVersion(update.version) && (
+            <Line icon={<FlaskConical className="size-4 text-warning" />}>
+              <span className="text-ink-secondary">
+                Version bêta : nouveautés en avant-première, elle peut contenir des bugs.
+              </span>
+            </Line>
+          )}
           {update.body && (
             <div className="mt-3 max-h-60 overflow-y-auto rounded-lg border border-line bg-page p-3">
               <Changelog markdown={update.body} />
@@ -131,4 +138,9 @@ function Line({ icon, children }: { icon: ReactNode; children: ReactNode }) {
       <span>{children}</span>
     </p>
   );
+}
+
+/** « 0.3.0-beta.1 » : une version SemVer avec suffixe est une pré-version (bêta). */
+export function isBetaVersion(version: string): boolean {
+  return /^\d+\.\d+\.\d+-/.test(version);
 }
