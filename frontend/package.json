@@ -2,7 +2,7 @@
   "name": "coc-autofarm-frontend",
   "private": true,
   "license": "AGPL-3.0-only",
-  "version": "0.2.1-beta.2",
+  "version": "0.3.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

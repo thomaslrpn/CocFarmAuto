@@ -3,7 +3,7 @@
 Toutes les évolutions notables de CoC AutoFarm. Format inspiré de « Keep a Changelog »,
 versions selon Semantic Versioning (1.0.0 = première version stable).
 
-## 0.3.0 — en développement
+## 0.3.0 — 2026-11-05
 
 ### Reconnaissance
 - Lecture fiable pour toutes les tailles de fenêtre du jeu de 960 x 540 à 2560 x 1440 (16:9).
