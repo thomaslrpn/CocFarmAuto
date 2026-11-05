@@ -19,6 +19,10 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Jeton aléatoire du moteur (générateur cryptographique du système).
 getrandom = "0.3"
+# Une seule instance (relancer l'application remet la fenêtre au premier plan).
+tauri-plugin-single-instance = "2"
+# Taille, position et état agrandi de la fenêtre mémorisés entre deux lancements.
+tauri-plugin-window-state = "2"
 
 [profile.release]
 # Exécutable plus petit et plus rapide pour la distribution.

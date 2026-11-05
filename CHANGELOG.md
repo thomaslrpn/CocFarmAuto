@@ -5,6 +5,11 @@ versions selon Semantic Versioning (1.0.0 = première version stable).
 
 ## 0.1.0 — en développement
 
+### Application de bureau (phase 7)
+- Logiciel Windows autonome : installateur en français, raccourcis bureau et menu Démarrer, désinstalleur.
+- Le moteur d'analyse est embarqué : démarré automatiquement avec l'application, arrêté à la fermeture.
+- Une seule instance à la fois ; taille et position de la fenêtre mémorisées.
+
 ### Interface (phase 6)
 - Dashboard : chiffres clés, état du moteur, démarrage / arrêt de l'observation, scores récents.
 - Pages Analyse (fiche village, détail du score) et Historique (filtres, tri, miniatures).
@@ -22,4 +27,5 @@ versions selon Semantic Versioning (1.0.0 = première version stable).
 ### Limites connues
 - Détection des bâtiments (hôtel de ville, réserves, défenses) pas encore disponible.
 - Une seule taille de fenêtre testée (1323 x 744).
-- Pas encore d'installateur ni de mises à jour automatiques (phases 7 et 8).
+- Installateur non signé (avertissement Windows SmartScreen) et pas encore de mises à jour automatiques (phase 8).
+- Icône provisoire.

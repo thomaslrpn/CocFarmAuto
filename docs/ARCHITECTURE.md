@@ -74,3 +74,6 @@ Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–
 - Arrêt : `POST /api/shutdown` à la fermeture, arrêt forcé après 8 s. Le moteur surveille aussi le processus parent (`--parent-pid`) : il s'arrête si l'application disparaît brutalement.
 - En développement, la même logique lance `python -m app.main` du venv ; la configuration de production (`tauri.release.conf.json`) ajoute la construction du moteur et sa copie dans l'installateur.
 - CSP de la fenêtre : connexions limitées à `127.0.0.1`.
+- Instance unique (`tauri-plugin-single-instance`, enregistré en premier) : relancer l'application remet la fenêtre existante au premier plan, sans démarrer un second moteur sur la même base SQLite.
+- Géométrie de la fenêtre (`tauri-plugin-window-state`) : taille, position et état agrandi sauvegardés dans `%APPDATA%\com.thomaslrpn.cocautofarm\.window-state.json`.
+- Installateur NSIS en français, installation par utilisateur (`%LOCALAPPDATA%\CoC AutoFarm`, pas de droits administrateur).

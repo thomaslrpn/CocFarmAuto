@@ -139,3 +139,8 @@ plus besoin de terminal ni de jeton. En développement (`npm run dev`), elle uti
 
 `npm run build` enchaîne : moteur (PyInstaller, `pip install -r backend/requirements-build.txt` requis),
 dashboard, application optimisée, puis installateur `src-tauri/target/release/bundle/nsis/*-setup.exe`.
+
+Comportement de l'application installée :
+- une seule instance : la relancer remet la fenêtre ouverte au premier plan ;
+- taille et position de la fenêtre conservées d'un lancement à l'autre ;
+- installateur en français, installé pour l'utilisateur courant (sans droits administrateur).
