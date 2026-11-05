@@ -105,6 +105,46 @@
     },
     "menu_shop_1323x744.png": {
       "screen": "unknown"
+    },
+    "scout_6_1323x744.png": {
+      "screen": "scout",
+      "loot": {
+        "gold": 339681,
+        "elixir": 167216,
+        "dark_elixir": 4013
+      }
+    },
+    "scout_7_1323x744.png": {
+      "screen": "scout",
+      "loot": {
+        "gold": 494696,
+        "elixir": 1164719,
+        "dark_elixir": 4253
+      }
+    },
+    "scout_8_1323x744.png": {
+      "screen": "scout",
+      "loot": {
+        "gold": 319730,
+        "elixir": 602800,
+        "dark_elixir": 7456
+      }
+    },
+    "scout_9_1323x744.png": {
+      "screen": "scout",
+      "loot": {
+        "gold": 308545,
+        "elixir": 388166,
+        "dark_elixir": 6692
+      }
+    },
+    "scout_10_1323x744.png": {
+      "screen": "scout",
+      "loot": {
+        "gold": 453843,
+        "elixir": 368457,
+        "dark_elixir": 17947
+      }
     }
   }
 }

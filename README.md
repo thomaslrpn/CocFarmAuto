@@ -25,7 +25,9 @@ cd backend
 python -m app.capture_cli            # capture (fonctionne même si la fenêtre est recouverte)
 python -m app.vision_debug           # écran reconnu + ressources lues sur la dernière capture
 python -m app.build_templates        # régénère les modèles après ajout de captures annotées
+python -m app.observe_cli            # mode observation : enregistre chaque village rencontré (Ctrl+C pour arrêter)
 ```
 
 - Images annotées : `%LOCALAPPDATA%\CoCAutoFarm\debug`.
+- Villages observés : `%LOCALAPPDATA%\CoCAutoFarm\observations` (un PNG + un JSON par village).
 - Captures d'entraînement : `datasets/*.png` (non versionnées) ; valeurs attendues : `datasets/labels.json` (versionné).

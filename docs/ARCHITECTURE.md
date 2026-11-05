@@ -50,3 +50,11 @@ Celle du cahier des charges (§12), avec en plus `docs/`. `backend/app/` contien
 ## 6. Feuille de route
 
 Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–4 sem., dépend des captures réelles), P3–4 (2 sem.), P5 (1 sem.), P6 (2–3 sem.), P7–8 (2–3 sem.), P9 (1–2 sem.). L'updater est testé tôt (dès un « hello world » Tauri) pour limiter les risques.
+
+## 7. Vision — décisions (phase 2)
+
+- **Capture** : `PrintWindow` (fenêtre recouverte acceptée), repli sur capture d'écran si image noire.
+- **Zones relatives** (fractions de l'image) mesurées sur captures réelles 1323x744.
+- **Chiffres et écrans** : template matching OpenCV (corrélation normalisée), modèles générés depuis `datasets/labels.json` par `app.build_templates` et livrés avec l'application.
+- **E/S d'images via Pillow** : `cv2.imread/imwrite` échouent silencieusement sur les chemins accentués sous Windows.
+- **Bâtiments (reporté)** : le butin est déjà lu directement, suffisant pour un premier score (phase 3). Les écrans de recherche sont collectés automatiquement par le mode observation ; la détection des bâtiments viendra ensuite avec **Ultralytics YOLO** (export ONNX, inférence `onnxruntime`). Sa licence AGPL-3.0 implique de publier le code source de CoC AutoFarm sous une licence compatible : accepté par le porteur du projet (2026-11-05).

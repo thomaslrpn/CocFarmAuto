@@ -28,6 +28,7 @@ def test_settings_use_env_override(monkeypatch, tmp_path):
     s = Settings.load()
     assert s.data_dir == tmp_path
     assert s.screenshots_dir == tmp_path / "screenshots"
+    assert s.observations_dir == tmp_path / "observations"
 
 
 def test_is_blank_detects_black_image():

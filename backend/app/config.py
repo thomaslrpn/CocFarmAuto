@@ -37,9 +37,15 @@ def user_data_dir() -> Path:
 class Settings:
     data_dir: Path
     screenshots_dir: Path
+    observations_dir: Path  # écrans de recherche enregistrés par le mode observation
     game_window_title: str = GAME_WINDOW_TITLE
+    observe_interval_s: float = 1.0  # délai entre deux analyses en mode observation
 
     @classmethod
     def load(cls) -> "Settings":
         data_dir = user_data_dir()
-        return cls(data_dir=data_dir, screenshots_dir=data_dir / "screenshots")
+        return cls(
+            data_dir=data_dir,
+            screenshots_dir=data_dir / "screenshots",
+            observations_dir=data_dir / "observations",
+        )
