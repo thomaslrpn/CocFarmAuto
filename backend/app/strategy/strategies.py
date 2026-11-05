@@ -84,7 +84,11 @@ def load_assumptions(data_dir: Path) -> SimulationAssumptions:
 
 
 def strategy_label(key: str | None) -> str:
-    """Nom lisible d'une stratégie à partir de sa clé (« à passer » si aucune)."""
+    """Nom lisible d'une stratégie à partir de sa clé (« aucune » si aucune ne l'attaquerait).
+
+    « aucune » et non « à passer » : un village peut être « intéressant » (score >= 60)
+    sans atteindre le score minimal des stratégies (70) ; « à passer » serait contradictoire.
+    """
     if key is None:
-        return "à passer"
+        return "aucune"
     return next((s.label for s in DEFAULT_STRATEGIES if s.key == key), key)

@@ -1,10 +1,11 @@
 import { AlertTriangle } from "lucide-react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router";
 import { Card } from "../components/Card";
 import { EngineStatusCard } from "../components/EngineStatusCard";
-import { RecentVillagesTable } from "../components/RecentVillagesTable";
 import { ScoreChart } from "../components/ScoreChart";
 import { StatTile } from "../components/StatTile";
+import { VillageTable } from "../components/VillageTable";
 import { usePolling } from "../hooks/usePolling";
 import { api } from "../services/api";
 import { formatCompact, formatNumber } from "../utils/format";
@@ -13,6 +14,7 @@ const CHART_VILLAGES = 30;
 const TABLE_VILLAGES = 8;
 
 export function DashboardPage() {
+  const navigate = useNavigate();
   const status = usePolling(api.status, 5000);
   const observer = usePolling(api.observer, 2000);
   const statistics = usePolling(api.statistics, 10000);
@@ -74,7 +76,11 @@ export function DashboardPage() {
       </Card>
 
       <Card title="Historique récent">
-        <RecentVillagesTable villages={recent.slice(0, TABLE_VILLAGES)} />
+        <VillageTable
+          villages={recent.slice(0, TABLE_VILLAGES)}
+          onSelect={(v) => navigate(`/analyse/${v.id}`)}
+          emptyMessage="Aucun village pour l'instant : démarre l'observation."
+        />
       </Card>
     </div>
   );

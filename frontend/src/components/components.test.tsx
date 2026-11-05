@@ -1,8 +1,11 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setToken } from "../services/auth";
+import type { VillageSummary } from "../types/api";
 import { RecommendationBadge } from "./RecommendationBadge";
+import { ScoreBreakdown } from "./ScoreBreakdown";
 import { TokenGate } from "./TokenGate";
+import { VillageTable } from "./VillageTable";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -39,5 +42,46 @@ describe("TokenGate", () => {
     vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
     render(<TokenGate>contenu protégé</TokenGate>);
     expect(await screen.findByText("Le moteur d'analyse ne répond pas")).toBeInTheDocument();
+  });
+});
+
+describe("ScoreBreakdown", () => {
+  it("affiche les critères mesurés, non disponibles et les avertissements", () => {
+    render(
+      <ScoreBreakdown
+        factors={[
+          { label: "Or", detail: "300 000 / 600 000 visés (50%), poids 40%", points: 20, max_points: 40, available: true },
+          { label: "Difficulté", detail: "nécessite la détection des défenses", points: 0, max_points: 0, available: false },
+        ]}
+        warnings={["coût de l'armée non configuré"]}
+      />,
+    );
+    expect(screen.getByRole("meter", { name: "Or : 20.0 points sur 40.0" })).toHaveAttribute("aria-valuenow", "20");
+    expect(screen.getByText(/non disponible/)).toBeInTheDocument();
+    expect(screen.getByText("coût de l'armée non configuré")).toBeInTheDocument();
+  });
+});
+
+describe("VillageTable", () => {
+  const village: VillageSummary = {
+    id: 7, analyzed_at: "2026-11-05T10:58:42", gold: 556048, elixir: 779701, dark_elixir: 6555,
+    profitability_score: 90, recommendation: "très intéressant", recommended_strategy: "elixir",
+    recommended_strategy_label: "Farm élixir", detection_confidence: 0.9, loot_value: 95,
+    relative_rank: 43, has_image: false,
+  };
+
+  it("ouvre la fiche au clic ou avec Entrée", () => {
+    const onSelect = vi.fn();
+    render(<VillageTable villages={[village]} onSelect={onSelect} />);
+    const row = screen.getByText("556 048").closest("tr")!;
+    fireEvent.click(row);
+    fireEvent.keyDown(row, { key: "Enter" });
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenCalledWith(village);
+  });
+
+  it("affiche un message quand la liste est vide", () => {
+    render(<VillageTable villages={[]} emptyMessage="Rien ici" />);
+    expect(screen.getByText("Rien ici")).toBeInTheDocument();
   });
 });

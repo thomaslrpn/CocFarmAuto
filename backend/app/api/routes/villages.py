@@ -1,13 +1,15 @@
 """Villages : historique filtrable, fiche détaillée, capture."""
 from __future__ import annotations
 
+import io
 import json
 from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
+from PIL import Image
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,6 +26,7 @@ from app.user_settings import UserSettings
 router = APIRouter(prefix="/villages", tags=["villages"])
 
 NO_STRATEGY = "none"  # filtre « villages à passer »
+MIN_THUMB_WIDTH, MAX_THUMB_WIDTH = 64, 800
 
 
 def _image_path(context: AppContext, village: Village) -> Path | None:
@@ -64,6 +67,9 @@ def list_villages(
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
     min_score: int | None = Query(None, ge=0, le=100),
+    min_gold: int | None = Query(None, ge=0, description="butin d'or minimal"),
+    min_elixir: int | None = Query(None, ge=0, description="butin d'élixir minimal"),
+    min_dark_elixir: int | None = Query(None, ge=0, description="butin d'élixir noir minimal"),
     strategy: str | None = Query(None, description=f"clé de stratégie, ou '{NO_STRATEGY}' (à passer)"),
     date_from: datetime | None = None,
     date_to: datetime | None = None,
@@ -75,6 +81,10 @@ def list_villages(
     query = select(Village)
     if min_score is not None:
         query = query.where(Village.profitability_score >= min_score)
+    for column, minimum in ((Village.gold, min_gold), (Village.elixir, min_elixir),
+                            (Village.dark_elixir, min_dark_elixir)):
+        if minimum is not None:
+            query = query.where(column >= minimum)
     if strategy == NO_STRATEGY:
         query = query.where(Village.recommended_strategy.is_(None))
     elif strategy:
@@ -129,14 +139,31 @@ def get_village(
     )
 
 
-@router.get("/{village_id}/image", summary="Capture du village (PNG)",
-            response_class=FileResponse, responses={200: {"content": {"image/png": {}}}})
+@router.get("/{village_id}/image", summary="Capture du village (PNG, ou miniature JPEG avec ?width=)",
+            response_class=FileResponse,
+            responses={200: {"content": {"image/png": {}, "image/jpeg": {}}}})
 def get_village_image(
     village_id: int,
+    width: int | None = Query(None, ge=MIN_THUMB_WIDTH, le=MAX_THUMB_WIDTH,
+                              description="largeur de la miniature (sinon capture originale)"),
     session: Session = Depends(get_session),
     context: AppContext = Depends(get_context),
-) -> FileResponse:
+) -> Response:
     path = _image_path(context, _get_village(session, village_id))
     if path is None:
         raise HTTPException(404, "Capture introuvable")
-    return FileResponse(path, media_type="image/png")
+    # Les captures ne changent jamais : le navigateur peut les garder en cache.
+    headers = {"Cache-Control": "private, max-age=86400"}
+    if width is None:
+        return FileResponse(path, media_type="image/png", headers=headers)
+    return Response(_thumbnail(path, width), media_type="image/jpeg", headers=headers)
+
+
+def _thumbnail(path: Path, width: int) -> bytes:
+    """Miniature JPEG : ~20 Ko au lieu d'un PNG d'environ 2 Mo (historique : 50 images par page)."""
+    with Image.open(path) as image:
+        image = image.convert("RGB")
+        image.thumbnail((width, width * 4))  # garde les proportions ; la largeur est la contrainte
+        buffer = io.BytesIO()
+        image.save(buffer, format="JPEG", quality=80)
+    return buffer.getvalue()

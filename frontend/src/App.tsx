@@ -2,7 +2,9 @@ import { HashRouter, Route, Routes } from "react-router";
 import { Layout } from "./components/Layout";
 import { PagePlaceholder } from "./components/PagePlaceholder";
 import { TokenGate } from "./components/TokenGate";
+import { AnalysisPage } from "./pages/AnalysisPage";
 import { DashboardPage } from "./pages/DashboardPage";
+import { HistoryPage } from "./pages/HistoryPage";
 
 /**
  * HashRouter (#/historique...) : fonctionne aussi bien avec le serveur de dev
@@ -15,8 +17,9 @@ export function App() {
         <Routes>
           <Route element={<Layout />}>
             <Route index element={<DashboardPage />} />
-            <Route path="analyse" element={<PagePlaceholder title="Analyse" step="6.2" />} />
-            <Route path="historique" element={<PagePlaceholder title="Historique" step="6.2" />} />
+            <Route path="analyse" element={<AnalysisPage />} />
+            <Route path="analyse/:id" element={<AnalysisPage />} />
+            <Route path="historique" element={<HistoryPage />} />
             <Route path="statistiques" element={<PagePlaceholder title="Statistiques" step="6.3" />} />
             <Route path="parametres" element={<PagePlaceholder title="Paramètres" step="6.3" />} />
             <Route path="logs" element={<PagePlaceholder title="Logs" step="6.3" />} />

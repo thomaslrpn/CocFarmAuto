@@ -88,8 +88,48 @@ export interface VillageQuery {
   limit?: number;
   offset?: number;
   min_score?: number;
+  min_gold?: number;
+  min_elixir?: number;
+  min_dark_elixir?: number;
   strategy?: string;
   date_from?: string;
   date_to?: string;
   sort?: "date" | "score" | "value";
+}
+
+export interface ScoreFactor {
+  label: string;
+  detail: string;
+  points: number;
+  max_points: number;
+  available: boolean;
+}
+
+export interface Loot {
+  gold: number;
+  elixir: number;
+  dark_elixir: number;
+}
+
+export type Priority = "balanced" | "gold" | "elixir" | "dark_elixir";
+
+export interface ScoringPreferences {
+  priority: Priority;
+  target_loot: Loot;
+  army_cost: Loot;
+  dark_elixir_importance: number;
+  min_gold_elixir: number;
+  very_good_threshold: number;
+  good_threshold: number;
+  average_threshold: number;
+}
+
+export interface VillageDetail extends VillageSummary {
+  town_hall_level: number | null;
+  estimated_difficulty: number | null;
+  explanation: string[];
+  factors: ScoreFactor[];
+  warnings: string[];
+  preferences_used: ScoringPreferences | null;
+  image_url: string | null;
 }

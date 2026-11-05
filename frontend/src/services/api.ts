@@ -6,6 +6,7 @@ import type {
   ObserverStatus,
   StatisticsOverview,
   Status,
+  VillageDetail,
   VillagePage,
   VillageQuery,
 } from "../types/api";
@@ -70,9 +71,12 @@ async function request<T>(path: string, init: RequestInit = {}, query?: Query): 
   return (await response.json()) as T;
 }
 
-/** URL d'une capture, utilisable dans <img src> (le jeton passe en paramètre). */
-export function villageImageUrl(villageId: number): string {
-  return buildUrl(`/villages/${villageId}/image`, { token: getToken() ?? undefined });
+/**
+ * URL d'une capture, utilisable dans <img src> (le jeton passe en paramètre).
+ * `width` : miniature JPEG légère (historique) ; sinon capture originale.
+ */
+export function villageImageUrl(villageId: number, width?: number): string {
+  return buildUrl(`/villages/${villageId}/image`, { width, token: getToken() ?? undefined });
 }
 
 export const api = {
@@ -80,6 +84,7 @@ export const api = {
   status: () => request<Status>("/status"),
   statistics: () => request<StatisticsOverview>("/statistics"),
   villages: (query: VillageQuery = {}) => request<VillagePage>("/villages", {}, { ...query }),
+  village: (id: number) => request<VillageDetail>(`/villages/${id}`),
   observer: () => request<ObserverStatus>("/observer"),
   startObserver: (intervalS?: number) =>
     request<ObserverStatus>("/observer/start", {

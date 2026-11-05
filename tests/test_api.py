@@ -1,5 +1,6 @@
 """Tests de l'API (FastAPI TestClient, base temporaire)."""
 from datetime import datetime
+from io import BytesIO
 
 import pytest
 from fastapi.testclient import TestClient
@@ -182,3 +183,31 @@ def test_settings_validation_errors(client):
 def test_settings_docs_show_example(client):
     schema = client.get("/openapi.json").json()["components"]["schemas"]["UserSettingsUpdate"]
     assert schema["examples"][0] == {"preferences": {"priority": "gold"}}
+
+
+def test_villages_minimum_loot_filters(client, ctx):
+    add_village(ctx, 900_000, 100_000, 2_000, minute=1)
+    add_village(ctx, 200_000, 800_000, 9_000, minute=2)
+    add_village(ctx, 500_000, 500_000, 15_000, minute=3)
+
+    def total(query):
+        return client.get(f"/api/villages?{query}", headers=AUTH).json()["total"]
+
+    assert total("min_gold=500000") == 2
+    assert total("min_elixir=500000") == 2
+    assert total("min_dark_elixir=10000") == 1
+    assert total("min_gold=500000&min_elixir=500000") == 1
+    assert client.get("/api/villages?min_gold=-1", headers=AUTH).status_code == 422
+
+
+def test_village_thumbnail(client, ctx):
+    ctx.settings.observations_dir.mkdir(parents=True)
+    Image.new("RGB", (1323, 744), "blue").save(ctx.settings.observations_dir / "scout_big.png")
+    village_id = add_village(ctx, 1, 1, 1, image="scout_big.png")
+
+    response = client.get(f"/api/villages/{village_id}/image?width=320&token={TOKEN}")
+    assert response.status_code == 200 and response.headers["content-type"] == "image/jpeg"
+    with Image.open(BytesIO(response.content)) as thumb:
+        assert thumb.size == (320, 180)  # proportions conservées
+    assert "max-age" in response.headers["cache-control"]
+    assert client.get(f"/api/villages/{village_id}/image?width=10", headers=AUTH).status_code == 422
