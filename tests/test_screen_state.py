@@ -95,11 +95,13 @@ def test_real_screens_leave_one_out():
 
 @requires_dataset
 def test_real_frames_full_analysis():
-    """Modèles livrés : bon écran, et butin lu seulement en recherche / combat."""
+    """Modèles livrés : bon écran, ressources du joueur lues hors écran inconnu,
+    butin lu seulement en recherche / combat."""
     models = VisionModels.load()
     for path, expected in load_screen_labels(LABELS):
         analysis = analyze_frame(to_bgr(Image.open(path)), models)
         assert analysis.screen.screen is expected, path.name
-        assert len(analysis.player_resources) == 3
+        has_player = expected is not GameScreen.UNKNOWN
+        assert (len(analysis.player_resources) == 3) == has_player, path.name
         has_loot = expected in (GameScreen.SCOUT, GameScreen.BATTLE)
         assert (len(analysis.loot) == 3) == has_loot, path.name

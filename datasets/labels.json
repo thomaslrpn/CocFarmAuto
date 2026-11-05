@@ -1,5 +1,5 @@
 {
-  "_doc": "Valeurs réelles lues à l'œil sur les captures de ce dossier. 'screen' = écran affiché (home, scout, battle) ; 'home' / 'loot' = compteurs de ressources. Sert à générer les modèles (app.build_templates) et aux tests. Les images ne sont pas versionnées (données personnelles), ce fichier oui.",
+  "_doc": "Valeurs réelles lues à l'œil sur les captures de ce dossier. 'screen' = écran affiché (home, scout, battle, unknown) ; 'home' / 'loot' = compteurs de ressources. Sert à générer les modèles (app.build_templates) et aux tests. Les images ne sont pas versionnées (données personnelles), ce fichier oui.",
   "captures": {
     "home_village_1323x744.png": {
       "screen": "home",
@@ -81,6 +81,30 @@
         "elixir": 24000000,
         "dark_elixir": 392731
       }
+    },
+    "home_village_3_1323x744.png": {
+      "screen": "home",
+      "home": {
+        "gold": 23998500,
+        "elixir": 24000000,
+        "dark_elixir": 400000
+      }
+    },
+    "scout_5_1323x744.png": {
+      "screen": "scout",
+      "home": {
+        "gold": 23997000,
+        "elixir": 24000000,
+        "dark_elixir": 400000
+      },
+      "loot": {
+        "gold": 205529,
+        "elixir": 186775,
+        "dark_elixir": 4659
+      }
+    },
+    "menu_shop_1323x744.png": {
+      "screen": "unknown"
     }
   }
 }
