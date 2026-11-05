@@ -12,7 +12,6 @@ Règle : on n'édite JAMAIS une migration déjà publiée ; on en ajoute une nou
 from __future__ import annotations
 
 import logging
-import shutil
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -79,10 +78,22 @@ def schema_version(conn: sqlite3.Connection) -> int:
 
 
 def backup_database(db_path: Path, backups_dir: Path, label: str) -> Path:
-    """Copie la base dans `backups_dir` et ne garde que les MAX_BACKUPS plus récentes."""
+    """Copie la base dans `backups_dir` et ne garde que les MAX_BACKUPS plus récentes.
+
+    Utilise l'API de sauvegarde de SQLite : la copie est cohérente même si le moteur
+    est en train d'écrire (mode WAL), contrairement à une simple copie de fichier.
+    """
     backups_dir.mkdir(parents=True, exist_ok=True)
     target = backups_dir / f"{db_path.stem}_{datetime.now():%Y%m%d_%H%M%S_%f}_{label}.db"
-    shutil.copy2(db_path, target)
+    source = sqlite3.connect(db_path)
+    try:
+        destination = sqlite3.connect(target)
+        try:
+            source.backup(destination)
+        finally:
+            destination.close()
+    finally:
+        source.close()
     for old in sorted(backups_dir.glob(f"{db_path.stem}_*.db"))[:-MAX_BACKUPS]:
         old.unlink()
     logger.info("Sauvegarde de la base : %s", target)

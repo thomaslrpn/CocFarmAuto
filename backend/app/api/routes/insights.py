@@ -1,9 +1,10 @@
 """État du moteur, statistiques, comparaison des stratégies, réglages."""
 from __future__ import annotations
 
+import sqlite3
 from typing import Any, TypeVar
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import func, select
@@ -21,6 +22,7 @@ from app.api.schemas import (
 )
 from app.capture.window import WindowNotSupportedError, find_window
 from app.config import APP_NAME, APP_VERSION
+from app.database.migrations import backup_database
 from app.database.models import Village
 from app.database.repository import count_villages, daily_statistics, village_to_sheet
 from app.strategy.simulator import compare_strategies
@@ -146,3 +148,18 @@ def shutdown(background: BackgroundTasks, context: AppContext = Depends(get_cont
     # Après l'envoi de la réponse : l'appelant reçoit sa confirmation avant l'arrêt.
     background.add_task(context.request_shutdown)
     return {"status": "stopping"}
+
+
+@router.post("/database/backup", tags=["moteur"],
+             summary="Sauvegarder la base (fait automatiquement avant une mise à jour)")
+def backup(
+    label: str = Query("manuel", pattern=r"^[A-Za-z0-9._-]{1,40}$",
+                       description="Suffixe du fichier de sauvegarde, ex. avant-maj-0.2.0"),
+    context: AppContext = Depends(get_context),
+) -> dict[str, str]:
+    s = context.settings
+    try:
+        path = backup_database(s.database_path, s.backups_dir, label)
+    except (OSError, sqlite3.Error) as exc:
+        raise HTTPException(500, f"Sauvegarde impossible : {exc}") from exc
+    return {"path": str(path)}

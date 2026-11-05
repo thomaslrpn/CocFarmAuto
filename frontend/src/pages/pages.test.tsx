@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setToken } from "../services/auth";
 import type { LogEntry, UserSettings } from "../types/api";
-import { Changelog } from "./AboutPage";
+import { Changelog } from "../components/Changelog";
 import { filterLogs } from "./LogsPage";
 import { SettingsPage } from "./SettingsPage";
 import { dayLabel, goldShare, scoreHistogram } from "./statisticsData";

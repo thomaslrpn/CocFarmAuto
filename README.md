@@ -144,3 +144,22 @@ Comportement de l'application installée :
 - une seule instance : la relancer remet la fenêtre ouverte au premier plan ;
 - taille et position de la fenêtre conservées d'un lancement à l'autre ;
 - installateur en français, installé pour l'utilisateur courant (sans droits administrateur).
+
+## Phase 8 — Mises à jour automatiques
+
+Les mises à jour sont signées : l'application n'installe qu'un fichier signé avec la clé privée
+du projet (vérification par la clé publique incluse dans `tauri.conf.json`).
+
+- Clé privée + mot de passe : `%USERPROFILE%\.coc-autofarm\updater.key` et `updater.password`.
+  **Hors du dépôt. À sauvegarder** (clé USB, gestionnaire de mots de passe) : sans eux, les
+  installations existantes ne pourront plus être mises à jour.
+- Compilation signée (installateur + `.sig`) :
+
+```powershell
+cd desktop
+.\scripts\build-release.ps1
+```
+
+Dans l'application : page **À propos** → « Rechercher des mises à jour ». Vérification automatique
+15 s après le démarrage puis toutes les 6 h ; un encadré apparaît dans le menu quand une version est
+disponible. Avant l'installation : sauvegarde de la base (`backups/…_avant-maj-<version>.db`) et arrêt du moteur.

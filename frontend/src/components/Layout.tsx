@@ -6,10 +6,12 @@ import {
   LayoutDashboard,
   ScanSearch,
   Settings,
+  Sparkles,
   Swords,
   type LucideIcon,
 } from "lucide-react";
-import { NavLink, Outlet } from "react-router";
+import { Link, NavLink, Outlet } from "react-router";
+import { useUpdater } from "../hooks/useUpdater";
 
 interface NavItem {
   to: string;
@@ -54,11 +56,27 @@ export function Layout() {
             </li>
           ))}
         </ul>
-        <p className="mt-auto px-2 text-xs text-ink-muted">Outil d'analyse — aucune action sur le jeu.</p>
+        <div className="mt-auto">
+          <UpdateNotice />
+          <p className="px-2 text-xs text-ink-muted">Outil d'analyse — aucune action sur le jeu.</p>
+        </div>
       </nav>
       <main className="min-w-0 flex-1 p-6 lg:p-8">
         <Outlet />
       </main>
     </div>
+  );
+}
+
+/** Signale dans le menu qu'une mise à jour est disponible (détails dans À propos). */
+function UpdateNotice() {
+  const { status, update } = useUpdater();
+  if (status !== "available" || !update) return null;
+  return (
+    <Link to="/a-propos"
+      className="mb-3 flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm hover:bg-accent/20">
+      <Sparkles aria-hidden className="size-4 shrink-0 text-accent" />
+      <span>Mise à jour {update.version} disponible</span>
+    </Link>
   );
 }

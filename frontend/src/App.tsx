@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from "react-router";
 import { Layout } from "./components/Layout";
 import { PagePlaceholder } from "./components/PagePlaceholder";
 import { TokenGate } from "./components/TokenGate";
+import { UpdaterProvider } from "./hooks/useUpdater";
 import { AboutPage } from "./pages/AboutPage";
 import { AnalysisPage } from "./pages/AnalysisPage";
 import { DashboardPage } from "./pages/DashboardPage";
@@ -17,21 +18,23 @@ import { StatisticsPage } from "./pages/StatisticsPage";
 export function App() {
   return (
     <TokenGate>
-      <HashRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route index element={<DashboardPage />} />
-            <Route path="analyse" element={<AnalysisPage />} />
-            <Route path="analyse/:id" element={<AnalysisPage />} />
-            <Route path="historique" element={<HistoryPage />} />
-            <Route path="statistiques" element={<StatisticsPage />} />
-            <Route path="parametres" element={<SettingsPage />} />
-            <Route path="logs" element={<LogsPage />} />
-            <Route path="a-propos" element={<AboutPage />} />
-            <Route path="*" element={<PagePlaceholder title="Page introuvable" step="—" />} />
-          </Route>
-        </Routes>
-      </HashRouter>
+      <UpdaterProvider>
+        <HashRouter>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route index element={<DashboardPage />} />
+              <Route path="analyse" element={<AnalysisPage />} />
+              <Route path="analyse/:id" element={<AnalysisPage />} />
+              <Route path="historique" element={<HistoryPage />} />
+              <Route path="statistiques" element={<StatisticsPage />} />
+              <Route path="parametres" element={<SettingsPage />} />
+              <Route path="logs" element={<LogsPage />} />
+              <Route path="a-propos" element={<AboutPage />} />
+              <Route path="*" element={<PagePlaceholder title="Page introuvable" step="—" />} />
+            </Route>
+          </Routes>
+        </HashRouter>
+      </UpdaterProvider>
     </TokenGate>
   );
 }

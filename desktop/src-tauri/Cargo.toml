@@ -23,6 +23,9 @@ getrandom = "0.3"
 tauri-plugin-single-instance = "2"
 # Taille, position et état agrandi de la fenêtre mémorisés entre deux lancements.
 tauri-plugin-window-state = "2"
+# Mises à jour automatiques signées (GitHub Releases) + redémarrage de l'application.
+tauri-plugin-updater = "2"
+tauri-plugin-process = "2"
 
 [profile.release]
 # Exécutable plus petit et plus rapide pour la distribution.

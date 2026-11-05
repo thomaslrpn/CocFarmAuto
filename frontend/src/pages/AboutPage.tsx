@@ -1,7 +1,9 @@
-import { Download, FolderOpen, ShieldCheck, Swords } from "lucide-react";
+import { FolderOpen, ShieldCheck, Swords } from "lucide-react";
 import type { ReactNode } from "react";
 import changelog from "../../../CHANGELOG.md?raw";
 import { Card } from "../components/Card";
+import { Changelog } from "../components/Changelog";
+import { UpdateCard } from "../components/UpdateCard";
 import { usePolling } from "../hooks/usePolling";
 import { api } from "../services/api";
 
@@ -42,17 +44,7 @@ export function AboutPage() {
           </p>
         </Card>
 
-        <Card title="Mises à jour">
-          <p className="text-sm text-ink-secondary">
-            La recherche et l'installation automatiques des mises à jour (signées, via GitHub Releases) arrivent avec
-            l'application de bureau (phases 7 et 8).
-          </p>
-          <button type="button" disabled
-            className="mt-4 inline-flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm opacity-50">
-            <Download aria-hidden className="size-4" /> Rechercher des mises à jour
-          </button>
-          <p className="mt-2 text-xs text-ink-muted">Bouton actif dans l'application installée.</p>
-        </Card>
+        <UpdateCard />
       </div>
 
       <Card title="Changelog">
@@ -60,41 +52,6 @@ export function AboutPage() {
       </Card>
     </div>
   );
-}
-
-/**
- * Affiche le CHANGELOG.md du projet (sous-ensemble Markdown : titres ## / ###,
- * listes « - », paragraphes). Pas de bibliothèque : le fichier est simple et maîtrisé.
- */
-export function Changelog({ markdown }: { markdown: string }) {
-  const blocks: ReactNode[] = [];
-  let list: string[] = [];
-  let paragraph: string[] = []; // lignes de texte consécutives = un seul paragraphe
-  const flush = () => {
-    if (paragraph.length) {
-      blocks.push(<p key={`p${blocks.length}`} className="mb-2 text-sm text-ink-muted">{paragraph.join(" ")}</p>);
-      paragraph = [];
-    }
-    if (list.length) {
-      blocks.push(
-        <ul key={`l${blocks.length}`} className="mb-3 list-disc space-y-1 pl-5 text-sm text-ink-secondary">
-          {list.map((item) => <li key={item}>{item}</li>)}
-        </ul>,
-      );
-      list = [];
-    }
-  };
-  for (const raw of markdown.split(/\r?\n/)) {
-    const line = raw.trim();
-    if (line.startsWith("- ")) { list.push(line.slice(2)); continue; }
-    if (line && !line.startsWith("#")) { paragraph.push(line); continue; }
-    flush();
-    if (!line || line.startsWith("# ")) continue; // le titre principal est déjà celui de la carte
-    if (line.startsWith("## ")) blocks.push(<h3 key={blocks.length} className="mb-2 mt-4 text-base font-semibold first:mt-0">{line.slice(3)}</h3>);
-    else if (line.startsWith("### ")) blocks.push(<h4 key={blocks.length} className="mb-1 mt-3 text-sm font-medium">{line.slice(4)}</h4>);
-  }
-  flush();
-  return <div>{blocks}</div>;
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {

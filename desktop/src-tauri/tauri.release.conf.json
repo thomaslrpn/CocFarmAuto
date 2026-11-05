@@ -4,6 +4,7 @@
     "beforeBuildCommand": "npm run build:backend && npm --prefix ../frontend run build"
   },
   "bundle": {
+    "createUpdaterArtifacts": true,
     "resources": {
       "../../backend/dist/backend/": "backend/"
     }

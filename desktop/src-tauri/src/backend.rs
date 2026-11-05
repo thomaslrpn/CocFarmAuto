@@ -86,6 +86,18 @@ pub fn backend_config(state: tauri::State<'_, Backend>) -> Result<BackendConfig,
     state.config()
 }
 
+/// Appelée par le dashboard juste avant d'installer une mise à jour : l'installateur
+/// remplace `backend.exe`, qui ne doit donc plus tourner. L'installation quitte
+/// l'application sans passer par la fermeture normale : on enregistre aussi la fenêtre ici.
+/// `async` : exécutée hors du fil de l'interface (l'arrêt peut prendre quelques secondes).
+#[tauri::command]
+pub async fn prepare_update(app: AppHandle) -> Result<(), String> {
+    use tauri_plugin_window_state::{AppHandleExt, StateFlags};
+    let _ = app.save_window_state(StateFlags::all());
+    app.state::<Backend>().stop();
+    Ok(())
+}
+
 fn spawn(app: &AppHandle) -> Result<(BackendConfig, Child), String> {
     let port = free_port().map_err(|e| format!("aucun port local disponible : {e}"))?;
     let token = random_token()?;

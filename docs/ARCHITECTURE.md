@@ -77,3 +77,10 @@ Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–
 - Instance unique (`tauri-plugin-single-instance`, enregistré en premier) : relancer l'application remet la fenêtre existante au premier plan, sans démarrer un second moteur sur la même base SQLite.
 - Géométrie de la fenêtre (`tauri-plugin-window-state`) : taille, position et état agrandi sauvegardés dans `%APPDATA%\com.thomaslrpn.cocautofarm\.window-state.json`.
 - Installateur NSIS en français, installation par utilisateur (`%LOCALAPPDATA%\CoC AutoFarm`, pas de droits administrateur).
+
+## 10. Mises à jour — décisions (phase 8)
+
+- `tauri-plugin-updater` : lit `https://github.com/thomaslrpn/CocFarmAuto/releases/latest/download/latest.json`, compare les versions (SemVer), télécharge l'installateur NSIS et vérifie sa signature minisign avec la clé publique de `tauri.conf.json`. Installation en mode `passive` (barre de progression, sans questions), relance automatique.
+- Clé privée hors dépôt (`%USERPROFILE%\.coc-autofarm\`), lue seulement par `desktop/scripts/build-release.ps1` le temps de la compilation. `createUpdaterArtifacts` n'est activé que dans `tauri.release.conf.json` (le mode dev n'a pas besoin de la clé).
+- Ordre d'installation, du plus sûr au plus risqué : téléchargement → sauvegarde de la base (`POST /api/database/backup`, API de sauvegarde SQLite, cohérente même en écriture) → arrêt du moteur (`prepare_update`, car l'installateur remplace `backend.exe`) → installation. Échec avant l'arrêt du moteur : rien n'a changé, « Réessayer ». Après : bouton « Redémarrer l'application ».
+- Les données utilisateur (`%LOCALAPPDATA%\CoCAutoFarm`) sont séparées du dossier d'installation : l'installateur ne les touche jamais ; les migrations de schéma gardent leur propre sauvegarde.

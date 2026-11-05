@@ -46,5 +46,16 @@
       "icons/128x128@2x.png",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDkxOUU0RkJEMEUxMDZEOTEKUldTUmJSQU92VStla1RJR1UrdlNYZlp0RkxLL28wdmlrSG1abWRUMmlyUzRMUjVzN1ZTNGJ4TG8K",
+      "endpoints": [
+        "https://github.com/thomaslrpn/CocFarmAuto/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }

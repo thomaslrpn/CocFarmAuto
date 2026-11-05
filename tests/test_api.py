@@ -1,4 +1,5 @@
 """Tests de l'API (FastAPI TestClient, base temporaire)."""
+import sqlite3
 from datetime import datetime
 from io import BytesIO
 
@@ -233,3 +234,16 @@ def test_shutdown_endpoint(ctx, tmp_path):
 
 def test_shutdown_unavailable_without_callback(client):
     assert client.post("/api/shutdown", headers=AUTH).status_code == 409
+
+
+def test_database_backup(client, ctx):
+    add_village(ctx, 100_000, 100_000, 0)
+    assert client.post("/api/database/backup").status_code == 401
+    response = client.post("/api/database/backup?label=avant-maj-0.2.0", headers=AUTH)
+    assert response.status_code == 200
+    path = response.json()["path"]
+    assert path.endswith("_avant-maj-0.2.0.db")
+    # Copie cohérente et lisible, même pendant que le moteur a la base ouverte.
+    with sqlite3.connect(path) as copy:
+        assert copy.execute("SELECT COUNT(*) FROM villages").fetchone()[0] == 1
+    assert client.post("/api/database/backup?label=../evil", headers=AUTH).status_code == 422

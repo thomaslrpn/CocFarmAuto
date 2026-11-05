@@ -59,3 +59,7 @@ tauri.key.pub.bak
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Clés de signature des mises à jour : JAMAIS dans le dépôt (elles vivent dans %USERPROFILE%\.coc-autofarm)
+*.key
+updater.password

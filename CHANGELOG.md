@@ -9,6 +9,8 @@ versions selon Semantic Versioning (1.0.0 = première version stable).
 - Logiciel Windows autonome : installateur en français, raccourcis bureau et menu Démarrer, désinstalleur.
 - Le moteur d'analyse est embarqué : démarré automatiquement avec l'application, arrêté à la fermeture.
 - Une seule instance à la fois ; taille et position de la fenêtre mémorisées.
+- Mises à jour automatiques signées (vérification au démarrage et toutes les 6 h, bouton dans À propos),
+  avec sauvegarde de la base avant chaque installation.
 
 ### Interface (phase 6)
 - Dashboard : chiffres clés, état du moteur, démarrage / arrêt de l'observation, scores récents.
@@ -27,5 +29,5 @@ versions selon Semantic Versioning (1.0.0 = première version stable).
 ### Limites connues
 - Détection des bâtiments (hôtel de ville, réserves, défenses) pas encore disponible.
 - Une seule taille de fenêtre testée (1323 x 744).
-- Installateur non signé (avertissement Windows SmartScreen) et pas encore de mises à jour automatiques (phase 8).
+- Installateur non signé pour Windows (avertissement SmartScreen à la première installation).
 - Icône provisoire.
