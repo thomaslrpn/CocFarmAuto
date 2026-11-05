@@ -56,6 +56,6 @@ def analyze_frame(bgr: np.ndarray, models: VisionModels) -> FrameAnalysis:
         read_resource_counters(bgr, LOOT_RESOURCE_REGIONS, models.digits)
         if screen.screen in LOOT_SCREENS else []
     )
-    logger.info("Écran %s (%.2f), %d compteur(s) joueur, %d compteur(s) butin",
+    logger.debug("Écran %s (%.2f), %d compteur(s) joueur, %d compteur(s) butin",
                 screen.screen.value, screen.confidence, len(player), len(loot))
     return FrameAnalysis(screen, player, loot)

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Callable
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
@@ -116,16 +115,8 @@ class ScoutRecorder:
             player_resources=_counters(analysis.player_resources),
         )
         json_path.write_text(record.model_dump_json(indent=2), encoding="utf-8")
-        logger.info("Village enregistré : %s", json_path.name)
+        logger.debug("Fichiers écrits : %s (+ .png)", json_path.name)
         return json_path
-
-
-@dataclass
-class ObserverStats:
-    frames: int = 0
-    missing_window: int = 0
-    errors: int = 0
-    saved: int = 0
 
 
 # --- Relecture des observations enregistrées --------------------------------

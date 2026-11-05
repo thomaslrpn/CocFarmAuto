@@ -89,3 +89,15 @@ python -m app.main                   # démarre l'API sur http://127.0.0.1:8765 
 - Documentation interactive : http://127.0.0.1:8765/docs → bouton **Authorize** → coller le jeton affiché au démarrage.
 - L'API n'écoute que ce PC et exige le jeton (en-tête `Authorization: Bearer <jeton>`, ou `?token=` pour les images).
 - Les réglages modifiés via `PUT /api/settings` sont enregistrés en base et utilisés par toutes les commandes.
+
+## Phase 5.3 — Observation pilotée par l'API, logs
+
+| URL | Rôle |
+|---|---|
+| `POST /api/observer/start` | démarre l'observation en tâche de fond (`{"interval_s": 1.0}` optionnel) |
+| `POST /api/observer/stop` | l'arrête (le cycle en cours se termine) |
+| `GET /api/observer` | état : analyses, villages enregistrés, dernier village, erreurs |
+| `GET /api/logs` | derniers événements (`level`, `after_id` pour ne lire que les nouveaux) |
+
+Journal complet (JSON, une ligne par événement) : `%LOCALAPPDATA%\CoCAutoFarm\logs\autofarm.log`.
+`python -m app.observe_cli` utilise le même moteur que l'API.

@@ -47,6 +47,7 @@ class Settings:
     observations_dir: Path  # écrans de recherche enregistrés par le mode observation
     database_path: Path  # base SQLite de l'utilisateur
     backups_dir: Path  # sauvegardes automatiques de la base (avant migration)
+    logs_dir: Path  # journaux (JSON, rotation)
     game_window_title: str = GAME_WINDOW_TITLE
     observe_interval_s: float = 1.0  # délai entre deux analyses en mode observation
 
@@ -59,6 +60,7 @@ class Settings:
             observations_dir=data_dir / "observations",
             database_path=data_dir / "autofarm.db",
             backups_dir=data_dir / "backups",
+            logs_dir=data_dir / "logs",
         )
 
 

@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.deps import AppContext, require_token
-from app.api.routes import insights, villages
+from app.api.routes import insights, observer, villages
 from app.api.schemas import Health
 from app.config import APP_NAME, APP_VERSION
 
@@ -30,7 +30,10 @@ def create_app(context: AppContext) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         yield
-        context.db.close()  # arrêt propre : libère la base
+        # Arrêt propre : finir le cycle d'observation en cours, PUIS fermer la base.
+        if context.observer is not None:
+            context.observer.stop()
+        context.db.close()
 
     app = FastAPI(
         title=f"{APP_NAME} API",
@@ -40,7 +43,7 @@ def create_app(context: AppContext) -> FastAPI:
     )
     app.state.context = context
     app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS,
-                       allow_methods=["GET", "PUT"], allow_headers=["Authorization", "Content-Type"])
+                       allow_methods=["GET", "PUT", "POST"], allow_headers=["Authorization", "Content-Type"])
 
     @app.get("/api/health", response_model=Health, tags=["moteur"], summary="Le backend répond-il ? (sans jeton)")
     def health() -> Health:
@@ -49,5 +52,6 @@ def create_app(context: AppContext) -> FastAPI:
     protected = APIRouter(prefix="/api", dependencies=[Depends(require_token)])
     protected.include_router(insights.router)
     protected.include_router(villages.router)
+    protected.include_router(observer.router)
     app.include_router(protected)
     return app

@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.config import Settings
 from app.database.database import Database
+from app.observer_service import ObserverService
 from app.user_settings import UserSettings, load_user_settings
 
 
@@ -28,6 +29,7 @@ class AppContext:
     db: Database
     token: str
     vision_ready: bool  # modèles de reconnaissance présents
+    observer: ObserverService | None = None  # None si la vision n'est pas prête
 
 
 _bearer = HTTPBearer(auto_error=False, description="Jeton affiché au démarrage du backend")

@@ -23,7 +23,7 @@ PREFS = ScoringPreferences()
 def _settings(tmp_path) -> Settings:
     return Settings(
         data_dir=tmp_path, screenshots_dir=tmp_path / "screenshots", observations_dir=tmp_path / "observations",
-        database_path=tmp_path / "test.db", backups_dir=tmp_path / "backups",
+        database_path=tmp_path / "test.db", backups_dir=tmp_path / "backups", logs_dir=tmp_path / "logs",
     )
 
 

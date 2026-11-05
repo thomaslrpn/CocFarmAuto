@@ -20,7 +20,9 @@ from app.api.deps import AppContext
 from app.config import Settings
 from app.database.database import Database
 from app.database.migrations import MigrationError
-from app.vision.frame import VisionModels
+from app.logging_setup import configure_logging
+from app.observer_service import ObserverService, game_window_frames
+from app.vision.frame import VisionModels, analyze_frame
 from app.vision.image_io import TemplatesNotFoundError
 
 HOST = "127.0.0.1"
@@ -31,24 +33,26 @@ logger = logging.getLogger("app.main")
 
 def build_context(settings: Settings) -> AppContext:
     db = Database.open(settings.database_path, settings.backups_dir)
+    observer = None
     try:
-        VisionModels.load()
-        vision_ready = True
+        models = VisionModels.load()
+        observer = ObserverService(settings, db, game_window_frames(settings),
+                                   lambda bgr: analyze_frame(bgr, models))
     except TemplatesNotFoundError as exc:
         logger.error("Modèles de vision absents : %s", exc)
-        vision_ready = False
     token = os.environ.get(TOKEN_ENV) or secrets.token_urlsafe(24)
-    return AppContext(settings=settings, db=db, token=token, vision_ready=vision_ready)
+    return AppContext(settings=settings, db=db, token=token, vision_ready=observer is not None, observer=observer)
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    settings = Settings.load()
+    configure_logging(settings.logs_dir)
     parser = argparse.ArgumentParser(description="Backend local de CoC AutoFarm")
     parser.add_argument("--port", type=int, default=8765, help="port local (défaut : %(default)s)")
     args = parser.parse_args()
 
     try:
-        context = build_context(Settings.load())
+        context = build_context(settings)
     except MigrationError as exc:
         print(f"Erreur base de données : {exc}", file=sys.stderr)
         return 1

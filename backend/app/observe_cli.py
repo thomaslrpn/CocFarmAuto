@@ -1,8 +1,8 @@
 """Mode observation : `python -m app.observe_cli [--interval 1.0] [--duration 600]`.
 
 Analyse la fenêtre du jeu à intervalle régulier et enregistre chaque nouvel
-écran de recherche. Lecture seule : aucune action n'est envoyée au jeu.
-Arrêt : Ctrl+C (ou fin de --duration).
+écran de recherche (fichiers + base). Lecture seule : aucune action envoyée au jeu.
+Même moteur que l'API (`ObserverService`). Arrêt : Ctrl+C (ou fin de --duration).
 """
 from __future__ import annotations
 
@@ -11,118 +11,68 @@ import logging
 import sys
 import time
 
-from app.analysis.scoring import ScoringPreferences
-from app.analysis.village_analysis import sheet_from_frame
-from app.capture.screen import CaptureError, grab_window
-from app.capture.window import WindowNotSupportedError, find_window
 from app.config import Settings
 from app.database.database import Database
 from app.database.migrations import MigrationError
-from app.database.repository import refresh_daily_statistics, save_evaluation
-from app.observer import ObserverStats, ScoutRecorder
-from app.user_settings import load_user_settings
-from app.strategy.advisor import evaluate_village
-from app.strategy.strategies import strategy_label
+from app.logging_setup import configure_logging
+from app.observer_service import ObservedVillage, ObserverError, ObserverService, game_window_frames
 from app.vision.frame import VisionModels, analyze_frame
 from app.vision.image_io import TemplatesNotFoundError
-from app.vision.preprocess import to_bgr
-
-logger = logging.getLogger("app.observe")
 
 
-def fmt(value: int | None) -> str:
-    return "?" if value is None else f"{value:,}".replace(",", " ")
+def fmt(value: int) -> str:
+    return f"{value:,}".replace(",", " ")
 
 
-def observe_once(
-    settings: Settings,
-    models: VisionModels,
-    recorder: ScoutRecorder,
-    stats: ObserverStats,
-    prefs: ScoringPreferences,
-    db: Database,
-) -> None:
-    """Un cycle : trouver la fenêtre, capturer, analyser, enregistrer si besoin."""
-    window = find_window(settings.game_window_title)
-    if window is None:
-        stats.missing_window += 1
-        return
-    image, _method = grab_window(window)
-    bgr = to_bgr(image)
-    analysis = analyze_frame(bgr, models)
-    stats.frames += 1
-    json_path = recorder.process(bgr, analysis)
-    if json_path is not None:
-        stats.saved += 1
-        gold, elixir, dark = (r.value for r in analysis.loot)
-        sheet = sheet_from_frame(analysis, source_image=json_path.with_suffix(".png").name)
-        verdict = ""
-        if sheet is not None:
-            evaluation = evaluate_village(sheet, prefs)
-            with db.session() as session:  # enregistrement en base + statistiques du jour
-                save_evaluation(session, evaluation, prefs)
-                refresh_daily_statistics(session, sheet.analyzed_at.date())
-            result = evaluation.result
-            verdict = (f"  -> {result.score}/100 {result.recommendation.value}"
-                       f" ({strategy_label(evaluation.strategy.key if evaluation.strategy else None)})")
-        print(f"[{time.strftime('%H:%M:%S')}] Village n°{stats.saved} : "
-              f"or {fmt(gold)} | élixir {fmt(elixir)} | noir {fmt(dark)}{verdict}")
+def print_village(v: ObservedVillage) -> None:
+    print(f"[{v.analyzed_at:%H:%M:%S}] or {fmt(v.gold)} | élixir {fmt(v.elixir)} | noir {fmt(v.dark_elixir)}"
+          f"  -> {v.score}/100 {v.recommendation} ({v.strategy})")
 
 
 def main() -> int:
-    logging.basicConfig(level=logging.WARNING, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     settings = Settings.load()
+    # Console : avertissements seulement (les villages sont affichés par print_village) ;
+    # fichier de logs : tout depuis INFO.
+    configure_logging(settings.logs_dir, console_level=logging.WARNING)
     parser = argparse.ArgumentParser(description="Enregistre automatiquement les villages rencontrés")
     parser.add_argument("--interval", type=float, default=settings.observe_interval_s,
                         help="secondes entre deux analyses (défaut : %(default)s)")
     parser.add_argument("--duration", type=float, default=None, help="arrêt automatique après N secondes")
     args = parser.parse_args()
-    if args.interval < 0.2:
-        parser.error("--interval doit être d'au moins 0.2 seconde")
 
     try:
         models = VisionModels.load()
-    except TemplatesNotFoundError as exc:
-        print(f"Erreur : {exc}", file=sys.stderr)
-        return 1
-
-    try:
         db = Database.open(settings.database_path, settings.backups_dir)
-    except MigrationError as exc:
+    except (TemplatesNotFoundError, MigrationError) as exc:
         print(f"Erreur : {exc}", file=sys.stderr)
         return 1
 
-    recorder = ScoutRecorder(settings.observations_dir)
-    with db.session() as session:
-        prefs = load_user_settings(session, settings.data_dir).preferences
-    stats = ObserverStats()
-    print(f"Observation en cours (toutes les {args.interval} s). Enregistrement dans :")
-    print(f"  {settings.observations_dir}")
-    print("Lance tes recherches dans le jeu. Ctrl+C pour arrêter.")
+    service = ObserverService(settings, db, game_window_frames(settings),
+                              lambda bgr: analyze_frame(bgr, models), on_village=print_village)
+    try:
+        service.start(args.interval)
+    except ObserverError as exc:
+        print(f"Erreur : {exc}", file=sys.stderr)
+        db.close()
+        return 1
 
+    print(f"Observation en cours (toutes les {args.interval} s). Captures : {settings.observations_dir}")
+    print("Lance tes recherches dans le jeu. Ctrl+C pour arrêter.")
     started = time.monotonic()
     try:
-        while args.duration is None or time.monotonic() - started < args.duration:
-            cycle_start = time.monotonic()
-            try:
-                observe_once(settings, models, recorder, stats, prefs, db)
-            except WindowNotSupportedError as exc:
-                print(f"Erreur : {exc}", file=sys.stderr)
-                return 1
-            except CaptureError as exc:  # erreur ponctuelle : on continue
-                stats.errors += 1
-                logger.warning("Capture impossible : %s", exc)
-            if stats.missing_window == 1 and stats.frames == 0:
-                print("Fenêtre du jeu introuvable : lance Clash of Clans (on réessaie en continu).")
-            time.sleep(max(0.0, args.interval - (time.monotonic() - cycle_start)))
+        while service.status().running and (args.duration is None or time.monotonic() - started < args.duration):
+            time.sleep(0.2)
     except KeyboardInterrupt:
         pass
     finally:
+        status = service.stop()
         db.close()
 
-    elapsed = time.monotonic() - started
-    print(f"\nArrêt après {elapsed:.0f} s : {stats.frames} analyse(s), {stats.saved} village(s) enregistré(s), "
-          f"{stats.errors} erreur(s), fenêtre absente {stats.missing_window} fois.")
+    print(f"\nArrêt après {time.monotonic() - started:.0f} s : {status.frames} analyse(s), "
+          f"{status.villages_saved} village(s) enregistré(s), {status.errors} erreur(s), "
+          f"fenêtre absente {status.missing_window} fois.")
+    if status.last_error:
+        print(f"Dernière erreur : {status.last_error}")
     return 0
 
 
