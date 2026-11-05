@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+/*
+ * Thème CoC AutoFarm : sombre uniquement (cahier des charges §11).
+ * Les couleurs sont des « rôles » (surface, encre, statut...) et non des teintes :
+ * on écrit bg-surface, text-ink-muted, etc. Valeurs issues d'une palette de
+ * visualisation validée pour le fond sombre (contraste, daltonisme).
+ */
+@theme {
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-page: #0d0d0d;
+  --color-surface: #1a1a19;
+  --color-surface-raised: #232322;
+  --color-line: #2c2c2a; /* filets, quadrillage */
+  --color-axis: #383835;
+
+  --color-ink: #f0efec; /* texte principal */
+  --color-ink-secondary: #c3c2b7;
+  --color-ink-muted: #898781;
+
+  --color-accent: #3987e5; /* action principale + série unique des graphiques */
+  --color-accent-strong: #2a78d6;
+
+  /* Statuts : toujours accompagnés d'une icône et d'un libellé, jamais seuls */
+  --color-good: #0ca30c;
+  --color-warning: #fab219;
+  --color-serious: #ec835a;
+  --color-critical: #d03b3b;
+
+  /* Identité des ressources (pastilles, jamais pour colorer du texte) */
+  --color-gold: #c98500;
+  --color-elixir: #d55181;
+  --color-dark-elixir: #9085e9;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-page);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Colonnes de chiffres alignées (tableaux, axes) */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

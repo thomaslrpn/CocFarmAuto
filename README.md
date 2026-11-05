@@ -101,3 +101,24 @@ python -m app.main                   # démarre l'API sur http://127.0.0.1:8765 
 
 Journal complet (JSON, une ligne par événement) : `%LOCALAPPDATA%\CoCAutoFarm\logs\autofarm.log`.
 `python -m app.observe_cli` utilise le même moteur que l'API.
+
+## Phase 6 — Dashboard (React + TypeScript + Vite + Tailwind)
+
+Deux terminaux :
+
+```powershell
+# Terminal 1 : le moteur
+cd backend; .\.venv\Scripts\Activate.ps1; python -m app.main
+
+# Terminal 2 : le dashboard (première fois : npm install)
+cd frontend; npm run dev
+```
+
+Ouvrir l'URL « Dashboard » affichée par le moteur (`http://localhost:5173/?token=...`) : le jeton est pris en compte automatiquement.
+
+```powershell
+cd frontend
+npm test              # tests (Vitest)
+npm run typecheck     # vérification TypeScript
+npm run build         # version de production (frontend/dist)
+```

@@ -27,6 +27,7 @@ from app.vision.image_io import TemplatesNotFoundError
 
 HOST = "127.0.0.1"
 TOKEN_ENV = "COC_AUTOFARM_TOKEN"
+DEV_DASHBOARD_URL = "http://localhost:5173"  # serveur de développement Vite (frontend/)
 
 logger = logging.getLogger("app.main")
 
@@ -61,6 +62,7 @@ def main() -> int:
     print(f"Documentation : http://{HOST}:{args.port}/docs")
     if not os.environ.get(TOKEN_ENV):
         print(f"Jeton (bouton « Authorize » de /docs) : {context.token}")
+        print(f"Dashboard (dev, après « npm run dev ») : {DEV_DASHBOARD_URL}/?token={context.token}")
     print("Ctrl+C pour arrêter.\n")
     uvicorn.run(create_app(context), host=HOST, port=args.port, log_level="warning")
     return 0
