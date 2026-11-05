@@ -31,3 +31,23 @@ python -m app.observe_cli            # mode observation : enregistre chaque vill
 - Images annotées : `%LOCALAPPDATA%\CoCAutoFarm\debug`.
 - Villages observés : `%LOCALAPPDATA%\CoCAutoFarm\observations` (un PNG + un JSON par village).
 - Captures d'entraînement : `datasets/*.png` (non versionnées) ; valeurs attendues : `datasets/labels.json` (versionné).
+
+## Phase 3 — Rentabilité
+
+```powershell
+python -m app.analyze_cli            # classe les villages observés par score, détaille le meilleur
+python -m app.analyze_cli --explain 3
+```
+
+Préférences (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\preferences.json`, par exemple :
+
+```json
+{
+  "priority": "balanced",
+  "target_loot": {"gold": 600000, "elixir": 600000, "dark_elixir": 10000},
+  "army_cost": {"gold": 0, "elixir": 0, "dark_elixir": 0},
+  "dark_elixir_importance": 1.0,
+  "min_gold_elixir": 0
+}
+```
+`priority` : `balanced`, `gold`, `elixir` ou `dark_elixir`.

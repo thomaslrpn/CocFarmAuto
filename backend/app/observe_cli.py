@@ -11,6 +11,9 @@ import logging
 import sys
 import time
 
+from app.analysis.profitability import compute_profitability
+from app.analysis.scoring import ScoringPreferences, load_preferences
+from app.analysis.village_analysis import sheet_from_frame
 from app.capture.screen import CaptureError, grab_window
 from app.capture.window import WindowNotSupportedError, find_window
 from app.config import Settings
@@ -26,7 +29,13 @@ def fmt(value: int | None) -> str:
     return "?" if value is None else f"{value:,}".replace(",", " ")
 
 
-def observe_once(settings: Settings, models: VisionModels, recorder: ScoutRecorder, stats: ObserverStats) -> None:
+def observe_once(
+    settings: Settings,
+    models: VisionModels,
+    recorder: ScoutRecorder,
+    stats: ObserverStats,
+    prefs: ScoringPreferences,
+) -> None:
     """Un cycle : trouver la fenêtre, capturer, analyser, enregistrer si besoin."""
     window = find_window(settings.game_window_title)
     if window is None:
@@ -39,8 +48,13 @@ def observe_once(settings: Settings, models: VisionModels, recorder: ScoutRecord
     if recorder.process(bgr, analysis) is not None:
         stats.saved += 1
         gold, elixir, dark = (r.value for r in analysis.loot)
+        sheet = sheet_from_frame(analysis)
+        verdict = ""
+        if sheet is not None:
+            result = compute_profitability(sheet, prefs)
+            verdict = f"  -> {result.score}/100 {result.recommendation.value}"
         print(f"[{time.strftime('%H:%M:%S')}] Village n°{stats.saved} : "
-              f"or {fmt(gold)} | élixir {fmt(elixir)} | noir {fmt(dark)}")
+              f"or {fmt(gold)} | élixir {fmt(elixir)} | noir {fmt(dark)}{verdict}")
 
 
 def main() -> int:
@@ -61,6 +75,7 @@ def main() -> int:
         return 1
 
     recorder = ScoutRecorder(settings.observations_dir)
+    prefs = load_preferences(settings.data_dir)
     stats = ObserverStats()
     print(f"Observation en cours (toutes les {args.interval} s). Enregistrement dans :")
     print(f"  {settings.observations_dir}")
@@ -71,7 +86,7 @@ def main() -> int:
         while args.duration is None or time.monotonic() - started < args.duration:
             cycle_start = time.monotonic()
             try:
-                observe_once(settings, models, recorder, stats)
+                observe_once(settings, models, recorder, stats, prefs)
             except WindowNotSupportedError as exc:
                 print(f"Erreur : {exc}", file=sys.stderr)
                 return 1
