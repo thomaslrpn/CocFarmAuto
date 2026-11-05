@@ -1,6 +1,6 @@
 [package]
 name = "coc-autofarm"
-version = "0.3.0"
+version = "1.0.0"
 description = "CoC AutoFarm - application de bureau"
 license = "AGPL-3.0-only"
 edition = "2021"

@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 APP_NAME = "CoC AutoFarm"
-APP_VERSION = "0.3.0"
+APP_VERSION = "1.0.0"
 # Fragment du titre de la fenêtre Google Play Games pour Clash of Clans.
 GAME_WINDOW_TITLE = "Clash of Clans"
 

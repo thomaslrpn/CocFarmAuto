@@ -3,7 +3,7 @@
 Toutes les évolutions notables de CoC AutoFarm. Format inspiré de « Keep a Changelog »,
 versions selon Semantic Versioning (1.0.0 = première version stable).
 
-## 1.0.0 — en développement
+## 1.0.0 — 2026-11-05
 
 Première version stable.
 
