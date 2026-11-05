@@ -2,23 +2,71 @@
   "_doc": "Valeurs réelles lues à l'œil sur les captures de ce dossier. Sert à générer les modèles de chiffres et à tester la lecture. Les images ne sont pas versionnées (données personnelles), ce fichier oui.",
   "captures": {
     "home_village_1323x744.png": {
-      "home": {"gold": 23371657, "elixir": 22440000, "dark_elixir": 324143}
+      "home": {
+        "gold": 23371657,
+        "elixir": 22440000,
+        "dark_elixir": 324143
+      }
     },
     "attack_loot_1323x744.png": {
-      "home": {"gold": 23740937, "elixir": 24000000, "dark_elixir": 348698},
-      "loot": {"gold": 393940, "elixir": 258025, "dark_elixir": 9500}
+      "home": {
+        "gold": 23740937,
+        "elixir": 24000000,
+        "dark_elixir": 348698
+      },
+      "loot": {
+        "gold": 393940,
+        "elixir": 258025,
+        "dark_elixir": 9500
+      }
     },
     "scout_1_1323x744.png": {
-      "home": {"gold": 23997000, "elixir": 24000000, "dark_elixir": 392731},
-      "loot": {"gold": 874844, "elixir": 610576, "dark_elixir": 2675}
+      "home": {
+        "gold": 23997000,
+        "elixir": 24000000,
+        "dark_elixir": 392731
+      },
+      "loot": {
+        "gold": 874844,
+        "elixir": 610576,
+        "dark_elixir": 2675
+      }
     },
     "scout_2_1323x744.png": {
-      "home": {"gold": 23995500, "elixir": 24000000, "dark_elixir": 392731},
-      "loot": {"gold": 314125, "elixir": 489222, "dark_elixir": 3830}
+      "home": {
+        "gold": 23995500,
+        "elixir": 24000000,
+        "dark_elixir": 392731
+      },
+      "loot": {
+        "gold": 314125,
+        "elixir": 489222,
+        "dark_elixir": 3830
+      }
     },
     "scout_3_1323x744.png": {
-      "home": {"gold": 23994000, "elixir": 24000000, "dark_elixir": 392731},
-      "loot": {"gold": 200891, "elixir": 370137, "dark_elixir": 5495}
+      "home": {
+        "gold": 23994000,
+        "elixir": 24000000,
+        "dark_elixir": 392731
+      },
+      "loot": {
+        "gold": 200891,
+        "elixir": 370137,
+        "dark_elixir": 5495
+      }
+    },
+    "scout_4_1323x744.png": {
+      "home": {
+        "gold": 23998500,
+        "elixir": 24000000,
+        "dark_elixir": 400000
+      },
+      "loot": {
+        "gold": 356527,
+        "elixir": 476594,
+        "dark_elixir": 3629
+      }
     }
   }
 }
