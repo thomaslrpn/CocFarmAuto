@@ -3,7 +3,7 @@
 Toutes les évolutions notables de CoC AutoFarm. Format inspiré de « Keep a Changelog »,
 versions selon Semantic Versioning (1.0.0 = première version stable).
 
-## 0.1.0 — en développement
+## 0.1.0 — 2026-11-05
 
 ### Application de bureau (phase 7)
 - Logiciel Windows autonome : installateur en français, raccourcis bureau et menu Démarrer, désinstalleur.
