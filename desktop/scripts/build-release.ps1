@@ -30,7 +30,8 @@ try {
     npm run build
     if ($LASTEXITCODE -ne 0) { throw "La compilation a échoué (code $LASTEXITCODE)." }
     Get-ChildItem "src-tauri\target\release\bundle\nsis" -Filter "*-setup.exe*" |
-        Select-Object Name, @{ n = "Taille (Mo)"; e = { [math]::Round($_.Length / 1MB, 1) } }
+        Select-Object Name, @{ n = "Taille (Mo)"; e = { [math]::Round($_.Length / 1MB, 1) } } |
+        Format-Table | Out-Host # affiché tout de suite, pas à la fin du script appelant
 }
 finally {
     Pop-Location
