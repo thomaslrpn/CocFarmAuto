@@ -14,6 +14,7 @@ from app.analysis.profitability import ScoreFactor
 from app.analysis.scoring import ScoringPreferences
 from app.strategy.simulator import SimulationResult
 from app.strategy.strategies import SimulationAssumptions
+from app.user_settings import AppPreferences
 
 
 class Health(BaseModel):
@@ -92,6 +93,7 @@ class StrategyComparison(BaseModel):
 class UserSettingsModel(BaseModel):
     preferences: ScoringPreferences
     simulation: SimulationAssumptions
+    app: AppPreferences
 
 
 class UserSettingsUpdate(BaseModel):
@@ -110,3 +112,4 @@ class UserSettingsUpdate(BaseModel):
         default=None, description="Champs de ScoringPreferences à modifier (voir GET /api/settings)")
     simulation: dict[str, Any] | None = Field(
         default=None, description="Champs de SimulationAssumptions à modifier")
+    app: dict[str, Any] | None = Field(default=None, description="Champs de AppPreferences à modifier")

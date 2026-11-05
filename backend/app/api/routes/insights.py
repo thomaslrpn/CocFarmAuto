@@ -88,7 +88,7 @@ def compare(session: Session = Depends(get_session),
 
 @router.get("/settings", response_model=UserSettingsModel, tags=["paramètres"], summary="Réglages actuels")
 def get_settings(user: UserSettings = Depends(get_user_settings)) -> UserSettingsModel:
-    return UserSettingsModel(preferences=user.preferences, simulation=user.simulation)
+    return UserSettingsModel(preferences=user.preferences, simulation=user.simulation, app=user.app)
 
 
 def _deep_merge(current: dict[str, Any], changes: dict[str, Any], path: tuple[str, ...]) -> dict[str, Any]:
@@ -132,6 +132,7 @@ def update_settings(
     new = UserSettings(
         preferences=_apply(user.preferences, update.preferences, "preferences"),
         simulation=_apply(user.simulation, update.simulation, "simulation"),
+        app=_apply(user.app, update.app, "app"),
     )
     save_user_settings(session, new)
-    return UserSettingsModel(preferences=new.preferences, simulation=new.simulation)
+    return UserSettingsModel(preferences=new.preferences, simulation=new.simulation, app=new.app)

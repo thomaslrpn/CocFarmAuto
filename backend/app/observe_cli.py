@@ -16,6 +16,7 @@ from app.database.database import Database
 from app.database.migrations import MigrationError
 from app.logging_setup import configure_logging
 from app.observer_service import ObservedVillage, ObserverError, ObserverService, game_window_frames
+from app.user_settings import load_user_settings
 from app.vision.frame import VisionModels, analyze_frame
 from app.vision.image_io import TemplatesNotFoundError
 
@@ -35,8 +36,8 @@ def main() -> int:
     # fichier de logs : tout depuis INFO.
     configure_logging(settings.logs_dir, console_level=logging.WARNING)
     parser = argparse.ArgumentParser(description="Enregistre automatiquement les villages rencontrés")
-    parser.add_argument("--interval", type=float, default=settings.observe_interval_s,
-                        help="secondes entre deux analyses (défaut : %(default)s)")
+    parser.add_argument("--interval", type=float, default=None,
+                        help="secondes entre deux analyses (défaut : réglage « fréquence des analyses »)")
     parser.add_argument("--duration", type=float, default=None, help="arrêt automatique après N secondes")
     args = parser.parse_args()
 
@@ -47,16 +48,18 @@ def main() -> int:
         print(f"Erreur : {exc}", file=sys.stderr)
         return 1
 
+    with db.session() as session:
+        interval = load_user_settings(session, settings.data_dir).app.observe_interval_s
     service = ObserverService(settings, db, game_window_frames(settings),
                               lambda bgr: analyze_frame(bgr, models), on_village=print_village)
     try:
-        service.start(args.interval)
+        status = service.start(args.interval if args.interval is not None else interval)
     except ObserverError as exc:
         print(f"Erreur : {exc}", file=sys.stderr)
         db.close()
         return 1
 
-    print(f"Observation en cours (toutes les {args.interval} s). Captures : {settings.observations_dir}")
+    print(f"Observation en cours (toutes les {status.interval_s} s). Captures : {settings.observations_dir}")
     print("Lance tes recherches dans le jeu. Ctrl+C pour arrêter.")
     started = time.monotonic()
     try:

@@ -17,7 +17,7 @@ import uvicorn
 
 from app.api.app import create_app
 from app.api.deps import AppContext
-from app.config import Settings
+from app.config import APP_VERSION, Settings
 from app.database.database import Database
 from app.database.migrations import MigrationError
 from app.logging_setup import configure_logging
@@ -58,6 +58,8 @@ def main() -> int:
         print(f"Erreur base de données : {exc}", file=sys.stderr)
         return 1
 
+    logger.info("Moteur démarré (version %s, port %d, vision %s)", APP_VERSION, args.port,
+                "prête" if context.vision_ready else "indisponible")
     print(f"\nCoC AutoFarm - API sur http://{HOST}:{args.port}")
     print(f"Documentation : http://{HOST}:{args.port}/docs")
     if not os.environ.get(TOKEN_ENV):

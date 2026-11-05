@@ -9,11 +9,11 @@ Une valeur invalide est journalisée puis ignorée : le logiciel démarre toujou
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TypeVar
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from app.analysis.scoring import PREFERENCES_FILE, ScoringPreferences
@@ -26,13 +26,22 @@ logger = logging.getLogger(__name__)
 
 PREFERENCES_KEY = "scoring_preferences"
 SIMULATION_KEY = "simulation_assumptions"
+APP_KEY = "app_preferences"
 ModelT = TypeVar("ModelT", bound=BaseModel)
+
+
+class AppPreferences(BaseModel):
+    """Préférences de fonctionnement de l'application."""
+
+    observe_interval_s: float = Field(default=1.0, ge=0.2, le=60,
+                                      description="secondes entre deux analyses en mode observation")
 
 
 @dataclass(frozen=True)
 class UserSettings:
     preferences: ScoringPreferences
     simulation: SimulationAssumptions
+    app: AppPreferences = field(default_factory=AppPreferences)
 
 
 def _load(session: Session, key: str, model: type[ModelT], data_dir: Path, filename: str) -> ModelT:
@@ -49,12 +58,14 @@ def load_user_settings(session: Session, data_dir: Path) -> UserSettings:
     return UserSettings(
         preferences=_load(session, PREFERENCES_KEY, ScoringPreferences, data_dir, PREFERENCES_FILE),
         simulation=_load(session, SIMULATION_KEY, SimulationAssumptions, data_dir, ASSUMPTIONS_FILE),
+        app=_load(session, APP_KEY, AppPreferences, data_dir, "app.json"),
     )
 
 
 def save_user_settings(session: Session, settings: UserSettings) -> None:
     set_setting(session, PREFERENCES_KEY, settings.preferences.model_dump(mode="json"))
     set_setting(session, SIMULATION_KEY, settings.simulation.model_dump(mode="json"))
+    set_setting(session, APP_KEY, settings.app.model_dump(mode="json"))
 
 
 def load_from_app_settings(app_settings: Settings) -> UserSettings:

@@ -211,3 +211,10 @@ def test_village_thumbnail(client, ctx):
         assert thumb.size == (320, 180)  # proportions conservées
     assert "max-age" in response.headers["cache-control"]
     assert client.get(f"/api/villages/{village_id}/image?width=10", headers=AUTH).status_code == 422
+
+
+def test_app_preferences_setting(client):
+    assert client.get("/api/settings", headers=AUTH).json()["app"] == {"observe_interval_s": 1.0}
+    updated = put_settings(client, {"app": {"observe_interval_s": 0.5}}).json()
+    assert updated["app"]["observe_interval_s"] == 0.5
+    assert put_settings(client, {"app": {"observe_interval_s": 0.01}}).status_code == 422

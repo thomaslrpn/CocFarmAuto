@@ -2,9 +2,13 @@ import { HashRouter, Route, Routes } from "react-router";
 import { Layout } from "./components/Layout";
 import { PagePlaceholder } from "./components/PagePlaceholder";
 import { TokenGate } from "./components/TokenGate";
+import { AboutPage } from "./pages/AboutPage";
 import { AnalysisPage } from "./pages/AnalysisPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HistoryPage } from "./pages/HistoryPage";
+import { LogsPage } from "./pages/LogsPage";
+import { SettingsPage } from "./pages/SettingsPage";
+import { StatisticsPage } from "./pages/StatisticsPage";
 
 /**
  * HashRouter (#/historique...) : fonctionne aussi bien avec le serveur de dev
@@ -20,10 +24,10 @@ export function App() {
             <Route path="analyse" element={<AnalysisPage />} />
             <Route path="analyse/:id" element={<AnalysisPage />} />
             <Route path="historique" element={<HistoryPage />} />
-            <Route path="statistiques" element={<PagePlaceholder title="Statistiques" step="6.3" />} />
-            <Route path="parametres" element={<PagePlaceholder title="Paramètres" step="6.3" />} />
-            <Route path="logs" element={<PagePlaceholder title="Logs" step="6.3" />} />
-            <Route path="a-propos" element={<PagePlaceholder title="À propos" step="6.3" />} />
+            <Route path="statistiques" element={<StatisticsPage />} />
+            <Route path="parametres" element={<SettingsPage />} />
+            <Route path="logs" element={<LogsPage />} />
+            <Route path="a-propos" element={<AboutPage />} />
             <Route path="*" element={<PagePlaceholder title="Page introuvable" step="—" />} />
           </Route>
         </Routes>

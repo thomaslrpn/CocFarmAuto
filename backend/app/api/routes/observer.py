@@ -7,16 +7,18 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from app.api.deps import AppContext, get_context
+from app.api.deps import AppContext, get_context, get_user_settings
 from app.logging_setup import LogEntry, memory_handler
 from app.observer_service import MIN_INTERVAL_S, ObserverError, ObserverService, ObserverStatus
+from app.user_settings import UserSettings
 
 router = APIRouter()
 
 
 class StartRequest(BaseModel):
-    interval_s: float | None = Field(default=None, ge=MIN_INTERVAL_S, le=60,
-                                     description="secondes entre deux analyses (défaut : réglage de l'application)")
+    interval_s: float | None = Field(
+        default=None, ge=MIN_INTERVAL_S, le=60,
+        description="secondes entre deux analyses (défaut : réglage « fréquence des analyses »)")
 
 
 def _observer(context: AppContext) -> ObserverService:
@@ -32,9 +34,14 @@ def observer_status(context: AppContext = Depends(get_context)) -> ObserverStatu
 
 @router.post("/observer/start", response_model=ObserverStatus, tags=["observation"],
              summary="Démarrer l'observation en tâche de fond (lecture seule)")
-def observer_start(request: StartRequest | None = None, context: AppContext = Depends(get_context)) -> ObserverStatus:
+def observer_start(
+    request: StartRequest | None = None,
+    context: AppContext = Depends(get_context),
+    user: UserSettings = Depends(get_user_settings),
+) -> ObserverStatus:
+    interval = request.interval_s if request and request.interval_s is not None else user.app.observe_interval_s
     try:
-        return _observer(context).start(request.interval_s if request else None)
+        return _observer(context).start(interval)
     except ObserverError as exc:
         raise HTTPException(409, str(exc)) from exc
 

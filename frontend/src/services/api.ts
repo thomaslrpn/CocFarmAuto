@@ -3,9 +3,15 @@
  * Toutes les requêtes passent par `request` : jeton, erreurs et JSON au même endroit.
  */
 import type {
+  LogEntry,
+  LogLevel,
   ObserverStatus,
   StatisticsOverview,
   Status,
+  StrategyComparison,
+  UserSettings,
+  UserSettingsUpdate,
+  ValidationIssue,
   VillageDetail,
   VillagePage,
   VillageQuery,
@@ -18,6 +24,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** Détail des champs refusés (erreur 422 de validation). */
+    readonly issues: ValidationIssue[] = [],
   ) {
     super(message);
     this.name = "ApiError";
@@ -60,13 +68,18 @@ async function request<T>(path: string, init: RequestInit = {}, query?: Query): 
   }
   if (!response.ok) {
     let detail = response.statusText;
+    let issues: ValidationIssue[] = [];
     try {
       const body = (await response.json()) as { detail?: unknown };
       if (typeof body.detail === "string") detail = body.detail;
+      if (Array.isArray(body.detail)) {
+        issues = body.detail as ValidationIssue[];
+        detail = "Valeurs refusées : " + issues.map((i) => i.msg).join(" ; ");
+      }
     } catch {
       /* corps non JSON : on garde le statut HTTP */
     }
-    throw new ApiError(response.status, detail);
+    throw new ApiError(response.status, detail, issues);
   }
   return (await response.json()) as T;
 }
@@ -92,4 +105,10 @@ export const api = {
       body: JSON.stringify(intervalS === undefined ? {} : { interval_s: intervalS }),
     }),
   stopObserver: () => request<ObserverStatus>("/observer/stop", { method: "POST" }),
+  settings: () => request<UserSettings>("/settings"),
+  updateSettings: (update: UserSettingsUpdate) =>
+    request<UserSettings>("/settings", { method: "PUT", body: JSON.stringify(update) }),
+  compareStrategies: () => request<StrategyComparison>("/strategies/compare"),
+  logs: (afterId = 0, level: LogLevel = "INFO") =>
+    request<LogEntry[]>("/logs", {}, { after_id: afterId, level, limit: 500 }),
 };

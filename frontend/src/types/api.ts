@@ -133,3 +133,81 @@ export interface VillageDetail extends VillageSummary {
   preferences_used: ScoringPreferences | null;
   image_url: string | null;
 }
+
+export interface CaptureRates {
+  gold: number;
+  elixir: number;
+  dark_elixir: number;
+}
+
+export interface SimulationAssumptions {
+  capture_rates: CaptureRates;
+  attack_duration_s: number;
+  army_ready_delay_s: number;
+  search_cost_gold: number;
+  search_time_s: number | null;
+}
+
+export interface AppPreferences {
+  observe_interval_s: number;
+}
+
+export interface UserSettings {
+  preferences: ScoringPreferences;
+  simulation: SimulationAssumptions;
+  app: AppPreferences;
+}
+
+/** Modification partielle : seuls les champs envoyés changent (fusion côté backend). */
+export interface UserSettingsUpdate {
+  preferences?: Partial<ScoringPreferences>;
+  simulation?: Partial<SimulationAssumptions>;
+  app?: Partial<AppPreferences>;
+}
+
+export interface StrategyInfo {
+  key: string;
+  label: string;
+  description: string;
+  priority: Priority;
+  min_score: number;
+}
+
+export interface SimulationResult {
+  strategy: StrategyInfo;
+  villages_seen: number;
+  attacks: number;
+  gross_loot: Loot;
+  costs: Loot;
+  net_loot: Loot;
+  duration_s: number;
+  net_per_hour: Loot;
+  points_per_hour: number;
+  skip_rate: number;
+}
+
+export interface StrategyComparison {
+  villages_count: number;
+  search_time_s: number;
+  assumptions: string[];
+  army_cost_configured: boolean;
+  results: SimulationResult[];
+}
+
+export type LogLevel = "DEBUG" | "INFO" | "WARNING" | "ERROR" | "CRITICAL";
+
+export interface LogEntry {
+  id: number;
+  time: string;
+  level: LogLevel;
+  category: string;
+  logger: string;
+  message: string;
+  data: Record<string, string | number | boolean>;
+}
+
+/** Erreur de validation FastAPI (422). */
+export interface ValidationIssue {
+  loc: (string | number)[];
+  msg: string;
+}

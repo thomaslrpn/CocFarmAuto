@@ -212,3 +212,10 @@ def test_screen_changes_are_logged_once(settings, db):
     for handler in logging.getLogger().handlers[:]:
         handler.close()
         logging.getLogger().removeHandler(handler)
+
+
+def test_api_start_uses_frequency_setting(client):
+    client.put("/api/settings", headers=AUTH, json={"app": {"observe_interval_s": 0.7}})
+    started = client.post("/api/observer/start", headers=AUTH).json()
+    assert started["interval_s"] == 0.7
+    client.post("/api/observer/stop", headers=AUTH)
