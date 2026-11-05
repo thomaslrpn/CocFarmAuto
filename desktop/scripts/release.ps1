@@ -195,11 +195,17 @@ try {
         signature = (Get-Content -Raw "$builtInstaller.sig").Trim()
         url       = "https://github.com/$Repo/releases/download/$Tag/$installerName"
     }
+    # Structure de base que cette version sait lire : l'application refuse un retour
+    # vers une version qui ne pourrait pas ouvrir la base (ex. bêta -> stable).
+    $schemaVersion = & (Join-Path $Root "backend\.venv\Scripts\python.exe") -I -c `
+        "import sys; sys.path.insert(0, r'$Root\backend'); from app.database.migrations import LATEST_VERSION; print(LATEST_VERSION)"
+    Assert-Native "Lecture de la version du schéma"
     $latest = [ordered]@{
-        version   = $Version
-        notes     = $notes
-        pub_date  = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-        platforms = [ordered]@{ "windows-x86_64" = $platform; "windows-x86_64-nsis" = $platform }
+        version        = $Version
+        notes          = $notes
+        pub_date       = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+        schema_version = [int] $schemaVersion
+        platforms      = [ordered]@{ "windows-x86_64" = $platform; "windows-x86_64-nsis" = $platform }
     }
     [IO.File]::WriteAllText((Join-Path $out "latest.json"), ($latest | ConvertTo-Json -Depth 5), $Utf8)
     $sha256 = (Get-FileHash (Join-Path $out $installerName) -Algorithm SHA256).Hash.ToLower()

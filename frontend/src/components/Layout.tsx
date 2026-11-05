@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router";
 import { useUpdater } from "../hooks/useUpdater";
+import { compareVersions } from "../services/versions";
 
 interface NavItem {
   to: string;
@@ -76,7 +77,9 @@ function UpdateNotice() {
     <Link to="/a-propos"
       className="mb-3 flex items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm hover:bg-accent/20">
       <Sparkles aria-hidden className="size-4 shrink-0 text-accent" />
-      <span>Mise à jour {update.version} disponible</span>
+      <span>
+        {compareVersions(update.version, update.currentVersion) < 0 ? "Version stable" : "Mise à jour"} {update.version} disponible
+      </span>
     </Link>
   );
 }

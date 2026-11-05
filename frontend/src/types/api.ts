@@ -16,6 +16,7 @@ export interface Status {
   villages_count: number;
   vision_ready: boolean;
   game_window: GameWindowState;
+  schema_version: number;
 }
 
 export interface VillageSummary {

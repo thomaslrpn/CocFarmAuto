@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, Download, FlaskConical, Loader2, RefreshCw, RotateCcw, Sparkles } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Download, FlaskConical, Loader2, RefreshCw, RotateCcw, Sparkles, Undo2 } from "lucide-react";
 import { useUpdater, type UpdaterState } from "../hooks/useUpdater";
-import type { InstallStep } from "../services/updater";
+import type { InstallStep, Update } from "../services/updater";
+import { assessUpdate, isBetaVersion } from "../services/versions";
 import { Card } from "./Card";
 import { Changelog } from "./Changelog";
 
@@ -14,8 +15,8 @@ const STEP_LABELS: Record<InstallStep, string> = {
 
 const BUTTON = "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm disabled:opacity-50";
 
-/** Carte « Mises à jour » de la page À propos. */
-export function UpdateCard() {
+/** Carte « Mises à jour » de la page À propos. `schemaVersion` : structure de la base actuelle. */
+export function UpdateCard({ schemaVersion }: { schemaVersion?: number }) {
   const updater = useUpdater();
   const { status, lastCheck, channel } = updater;
 
@@ -41,7 +42,7 @@ export function UpdateCard() {
         </button>
       }
     >
-      <UpdateStatus updater={updater} />
+      <UpdateStatus updater={updater} schemaVersion={schemaVersion} />
       {lastCheck && (
         <p className="mt-3 text-xs text-ink-muted">
           Dernière vérification : {lastCheck.toLocaleString("fr-FR")} · canal {channel === "beta" ? "bêta" : "stable"} (modifiable dans Paramètres).
@@ -51,7 +52,7 @@ export function UpdateCard() {
   );
 }
 
-function UpdateStatus({ updater }: { updater: UpdaterState }) {
+function UpdateStatus({ updater, schemaVersion }: { updater: UpdaterState; schemaVersion?: number }) {
   const { status, update, error, step, progress, needsRestart } = updater;
 
   switch (status) {
@@ -102,33 +103,60 @@ function UpdateStatus({ updater }: { updater: UpdaterState }) {
       );
     case "available":
       if (!update) return null;
-      return (
-        <div>
-          <Line icon={<Sparkles className="size-4 text-accent" />}>
-            Version <strong>{update.version}</strong> disponible (installée : {update.currentVersion}).
-          </Line>
-          {isBetaVersion(update.version) && (
-            <Line icon={<FlaskConical className="size-4 text-warning" />}>
-              <span className="text-ink-secondary">
-                Version bêta : nouveautés en avant-première, elle peut contenir des bugs.
-              </span>
-            </Line>
-          )}
-          {update.body && (
+      return <AvailableUpdate update={update} schemaVersion={schemaVersion} onInstall={() => void updater.install()} />;
+  }
+}
+
+function AvailableUpdate({ update, schemaVersion, onInstall }: {
+  update: Update;
+  schemaVersion?: number;
+  onInstall: () => void;
+}) {
+  const { downgrade, compatibility } = assessUpdate(update, schemaVersion);
+  const blocked = compatibility === "incompatible";
+  return (
+    <div>
+      <Line icon={downgrade ? <Undo2 className="size-4 text-accent" /> : <Sparkles className="size-4 text-accent" />}>
+        {downgrade ? "Retour à la version stable " : "Version "}
+        <strong>{update.version}</strong> {downgrade ? "possible" : "disponible"} (installée : {update.currentVersion}).
+      </Line>
+      {isBetaVersion(update.version) && (
+        <Line icon={<FlaskConical className="size-4 text-warning" />}>
+          <span className="text-ink-secondary">Version bêta : nouveautés en avant-première, elle peut contenir des bugs.</span>
+        </Line>
+      )}
+      {downgrade && !blocked && (
+        <p className="mt-2 text-sm text-ink-secondary">
+          Les nouveautés de la bêta seront retirées ; tes données sont conservées.
+          {compatibility === "unknown" &&
+            " Compatibilité de la base non vérifiable pour cette ancienne publication : en cas de problème, une sauvegarde est faite juste avant."}
+        </p>
+      )}
+      {blocked ? (
+        <Line icon={<AlertTriangle className="size-4 text-warning" />}>
+          <span className="text-ink-secondary">
+            Retour impossible pour l'instant : la bêta a fait évoluer la structure de ta base de données, que la
+            version {update.version} ne sait pas lire. La prochaine version stable te sera proposée automatiquement.
+          </span>
+        </Line>
+      ) : (
+        <>
+          {update.body && !downgrade && (
             <div className="mt-3 max-h-60 overflow-y-auto rounded-lg border border-line bg-page p-3">
               <Changelog markdown={update.body} />
             </div>
           )}
-          <button type="button" onClick={() => void updater.install()}
+          <button type="button" onClick={onInstall}
             className={`${BUTTON} mt-4 bg-accent-strong font-medium hover:bg-accent`}>
-            <Download aria-hidden className="size-4" /> Installer et redémarrer
+            <Download aria-hidden className="size-4" /> {downgrade ? "Revenir à la version stable" : "Installer et redémarrer"}
           </button>
           <p className="mt-2 text-xs text-ink-muted">
             Fichier signé et vérifié avant installation. Ta base est sauvegardée automatiquement.
           </p>
-        </div>
-      );
-  }
+        </>
+      )}
+    </div>
+  );
 }
 
 function Line({ icon, children }: { icon: ReactNode; children: ReactNode }) {
@@ -140,7 +168,3 @@ function Line({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   );
 }
 
-/** « 0.3.0-beta.1 » : une version SemVer avec suffixe est une pré-version (bêta). */
-export function isBetaVersion(version: string): boolean {
-  return /^\d+\.\d+\.\d+-/.test(version);
-}

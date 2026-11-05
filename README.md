@@ -186,3 +186,6 @@ et crée la release GitHub. Les applications installées la proposent à leur pr
 Canaux : dans **Paramètres → Application**, « Stable » (par défaut) ou « Bêta ». Le canal bêta reçoit
 les versions publiées avec `-Prerelease` en plus des stables ; la recherche automatique peut y être désactivée.
 L'historique des versions publiées est visible dans **À propos**.
+Pour quitter la bêta : repasser le canal sur « Stable » ; la dernière version stable est alors proposée
+(« Revenir à la version stable »), sauf si la bêta a fait évoluer la base de données — dans ce cas la
+prochaine version stable sera proposée automatiquement.

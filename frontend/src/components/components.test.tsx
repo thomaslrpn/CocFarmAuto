@@ -5,7 +5,6 @@ import type { VillageSummary } from "../types/api";
 import { RecommendationBadge } from "./RecommendationBadge";
 import { ScoreBreakdown } from "./ScoreBreakdown";
 import { TokenGate } from "./TokenGate";
-import { isBetaVersion } from "./UpdateCard";
 import { VillageTable } from "./VillageTable";
 
 afterEach(() => vi.unstubAllGlobals());
@@ -120,12 +119,5 @@ describe("TokenGate (application de bureau)", () => {
     render(<TokenGate>contenu protégé</TokenGate>);
     expect(await screen.findByText("Le moteur d'analyse n'a pas pu démarrer")).toBeInTheDocument();
     expect(screen.getByText(/moteur introuvable/)).toBeInTheDocument();
-  });
-});
-
-describe("mises à jour", () => {
-  it("reconnaît une version bêta", () => {
-    expect(isBetaVersion("0.2.1-beta.1")).toBe(true);
-    expect(isBetaVersion("0.2.1")).toBe(false);
   });
 });

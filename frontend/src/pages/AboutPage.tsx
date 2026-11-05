@@ -45,7 +45,7 @@ export function AboutPage() {
           </p>
         </Card>
 
-        <UpdateCard />
+        <UpdateCard schemaVersion={s?.schema_version} />
       </div>
 
       <div className="grid items-start gap-6 xl:grid-cols-2">

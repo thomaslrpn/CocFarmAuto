@@ -22,7 +22,7 @@ from app.api.schemas import (
 )
 from app.capture.window import WindowNotSupportedError, find_window
 from app.config import APP_NAME, APP_VERSION
-from app.database.migrations import backup_database
+from app.database.migrations import LATEST_VERSION, backup_database
 from app.database.models import Village
 from app.database.repository import count_villages, daily_statistics, village_to_sheet
 from app.strategy.simulator import compare_strategies
@@ -51,6 +51,7 @@ def get_status(session: Session = Depends(get_session), context: AppContext = De
         villages_count=count_villages(session),
         vision_ready=context.vision_ready,
         game_window=_game_window_state(s.game_window_title),
+        schema_version=LATEST_VERSION,
     )
 
 

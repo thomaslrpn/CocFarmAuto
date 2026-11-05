@@ -26,6 +26,8 @@ tauri-plugin-window-state = "2"
 # Mises à jour automatiques signées (GitHub Releases) + redémarrage de l'application.
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+# Comparaison de versions (retour du canal bêta vers le stable).
+semver = "1"
 
 [profile.release]
 # Exécutable plus petit et plus rapide pour la distribution.

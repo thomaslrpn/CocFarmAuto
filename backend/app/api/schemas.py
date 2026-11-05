@@ -29,6 +29,7 @@ class Status(BaseModel):
     villages_count: int
     vision_ready: bool
     game_window: str  # "found" | "not_found" | "unsupported"
+    schema_version: int  # structure de la base de données (migrations appliquées)
 
 
 class VillageSummary(BaseModel):

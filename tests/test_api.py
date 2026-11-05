@@ -14,6 +14,7 @@ from app.api.app import create_app
 from app.api.deps import AppContext
 from app.config import Settings
 from app.database.database import Database
+from app.database.migrations import LATEST_VERSION
 from app.database.repository import refresh_daily_statistics, save_evaluation
 from app.strategy.advisor import evaluate_village
 
@@ -93,6 +94,7 @@ def test_status(client):
     body = client.get("/api/status", headers=AUTH).json()
     assert body["villages_count"] == 0 and body["vision_ready"] is True
     assert body["game_window"] in {"found", "not_found", "unsupported"}
+    assert body["schema_version"] == LATEST_VERSION  # compatibilité vérifiée avant un retour de version
 
 
 def test_villages_list_filters_and_relative_rank(client, ctx):
