@@ -1,8 +1,9 @@
 import { AlertTriangle, ArrowLeft, ExternalLink, ImageOff, Radio } from "lucide-react";
 import type { ReactNode } from "react";
 import { Link, useParams } from "react-router";
+import { AttackRecap, attackDuration } from "../components/AttackRecap";
 import { Card } from "../components/Card";
-import { RecommendationBadge } from "../components/RecommendationBadge";
+import { FarmScoreBadge, RecommendationBadge } from "../components/RecommendationBadge";
 import { ScoreBreakdown } from "../components/ScoreBreakdown";
 import { StatTile } from "../components/StatTile";
 import { PRIORITY_LABELS } from "../constants/strategies";
@@ -119,6 +120,21 @@ function VillageView({ village: v }: { village: VillageDetail }) {
         <StatTile label="Élixir disponible" value={formatNumber(v.elixir)} swatchClassName="bg-elixir" />
         <StatTile label="Élixir noir disponible" value={formatNumber(v.dark_elixir)} swatchClassName="bg-dark-elixir" />
       </div>
+
+      {v.attack && (
+        <Card
+          title={`Résultat de l'attaque · ${attackDuration(v.attack)}`}
+          action={v.attack.farm_score !== null && v.attack.farm_rating !== null
+            ? <FarmScoreBadge score={v.attack.farm_score} rating={v.attack.farm_rating} /> : undefined}
+        >
+          <AttackRecap attack={v.attack} />
+          <p className="mt-3 text-xs text-ink-muted">
+            Butin récupéré sur le butin disponible, lu sur l'écran du combat (« Butin disponible » restant à la fin).
+            La note du farm applique au butin récupéré le même calcul que le score d'un village (ressource
+            prioritaire, butin visé, coût de l'armée).
+          </p>
+        </Card>
+      )}
 
       <div className="grid gap-6 xl:grid-cols-5">
         <Card className="xl:col-span-3" title="Détail du calcul">

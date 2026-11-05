@@ -15,7 +15,10 @@ a = Analysis(
     [os.path.join(ROOT, "run_backend.py")],
     pathex=[ROOT],
     # Modèles de reconnaissance livrés avec l'application (chiffres, écrans).
-    datas=[(os.path.join(ROOT, "app", "vision", "templates"), os.path.join("app", "vision", "templates"))],
+    datas=[
+        (os.path.join(ROOT, "app", "vision", "templates"), os.path.join("app", "vision", "templates")),
+        (os.path.join(ROOT, "app", "assets", "alert.wav"), os.path.join("app", "assets")),  # son des alertes
+    ],
     # uvicorn charge certains modules dynamiquement (boucle, protocoles) : on les inclut tous.
     hiddenimports=collect_submodules("uvicorn"),
     excludes=["tkinter", "pytest", "matplotlib", "IPython"],

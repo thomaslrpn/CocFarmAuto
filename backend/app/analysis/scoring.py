@@ -25,11 +25,13 @@ class Priority(str, Enum):
 
 
 # Importance relative de chaque ressource selon la priorité choisie (somme = 1).
+# Avec une ressource prioritaire, elle pèse 80 % : un village riche en autres ressources
+# mais pauvre en ressource prioritaire ne peut pas dépasser 20/100 (« à passer »).
 PRIORITY_WEIGHTS: dict[Priority, dict[Resource, float]] = {
     Priority.BALANCED: {Resource.GOLD: 0.4, Resource.ELIXIR: 0.4, Resource.DARK_ELIXIR: 0.2},
-    Priority.GOLD: {Resource.GOLD: 0.6, Resource.ELIXIR: 0.25, Resource.DARK_ELIXIR: 0.15},
-    Priority.ELIXIR: {Resource.GOLD: 0.25, Resource.ELIXIR: 0.6, Resource.DARK_ELIXIR: 0.15},
-    Priority.DARK_ELIXIR: {Resource.GOLD: 0.2, Resource.ELIXIR: 0.2, Resource.DARK_ELIXIR: 0.6},
+    Priority.GOLD: {Resource.GOLD: 0.8, Resource.ELIXIR: 0.1, Resource.DARK_ELIXIR: 0.1},
+    Priority.ELIXIR: {Resource.GOLD: 0.1, Resource.ELIXIR: 0.8, Resource.DARK_ELIXIR: 0.1},
+    Priority.DARK_ELIXIR: {Resource.GOLD: 0.1, Resource.ELIXIR: 0.1, Resource.DARK_ELIXIR: 0.8},
 }
 
 

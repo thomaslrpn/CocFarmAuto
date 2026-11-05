@@ -78,6 +78,7 @@ Les réglages sont en base (`PUT /api/settings`, modification partielle).
 | `POST /api/observer/start` / `stop`, `GET /api/observer` | observation |
 | `GET /api/logs` | derniers événements |
 | `POST /api/database/backup?label=` | sauvegarde de la base |
+| `POST /api/alerts/test` | alerte d'exemple (son + notification selon les réglages) |
 | `POST /api/shutdown` | arrêt propre (utilisé par l'application de bureau) |
 
 L'API n'écoute que `127.0.0.1` et exige le jeton (`Authorization: Bearer <jeton>`, ou `?token=` pour les images).

@@ -29,6 +29,8 @@ tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 # Comparaison de versions (retour du canal bêta vers le stable).
 semver = "1"
+# Notifications Windows (alertes « village intéressant »).
+tauri-plugin-notification = "2"
 
 [profile.release]
 # Exécutable plus petit et plus rapide pour la distribution.

@@ -194,3 +194,19 @@ def test_import_observations_is_idempotent(db, tmp_path):
     assert (second.imported, second.already_present) == (0, 2)
     with db.session() as session:
         assert count_villages(session) == 2 and len(daily_statistics(session)) == 1
+
+
+def test_v2_database_with_attacks_gets_farm_score_columns(tmp_path, monkeypatch):
+    """Base créée par la 1.0.0 de test (schéma v2, attaques sans note) : la migration 3 la complète."""
+    path = tmp_path / "v2.db"
+    monkeypatch.setattr(migrations, "MIGRATIONS", migrations.MIGRATIONS[:2])
+    monkeypatch.setattr(migrations, "LATEST_VERSION", 2)
+    migrate(path, tmp_path / "bk")
+    with sqlite3.connect(path) as conn:
+        conn.execute("INSERT INTO attacks (started_at, ended_at, available_gold, available_elixir, "
+                     "available_dark_elixir, gained_gold) VALUES ('2026-11-05', '2026-11-05', 1, 2, 3, 1)")
+    monkeypatch.undo()
+    migrate(path, tmp_path / "bk")
+    with sqlite3.connect(path) as conn:
+        assert conn.execute("SELECT gained_gold, farm_score, farm_rating FROM attacks").fetchone() == (1, None, None)
+    assert version_of(path) == LATEST_VERSION

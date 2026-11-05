@@ -15,6 +15,7 @@ from fastapi import Depends, HTTPException, Query, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.alerts import AlertService
 from app.config import Settings
 from app.database.database import Database
 from app.observer_service import ObserverService
@@ -31,6 +32,7 @@ class AppContext:
     vision_ready: bool  # modèles de reconnaissance présents
     observer: ObserverService | None = None  # None si la vision n'est pas prête
     request_shutdown: Callable[[], None] | None = None  # arrêt propre du moteur (application de bureau)
+    alerts: AlertService | None = None  # alertes (son, notification) du mode observation
 
 
 _bearer = HTTPBearer(auto_error=False, description="Jeton affiché au démarrage du backend")

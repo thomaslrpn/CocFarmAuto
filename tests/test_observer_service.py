@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
+from app.analysis.scoring import Priority, ScoringPreferences
 from app.api.app import create_app
 from app.api.deps import AppContext
 from app.capture.window import WindowNotSupportedError
@@ -229,3 +230,17 @@ def test_warns_once_when_game_window_is_too_small(settings, db, caplog):
         service._check_window_size(np.zeros((744, 1323, 3), np.uint8))  # taille correcte : rien
     warnings = [r for r in caplog.records if "trop petite" in r.getMessage()]
     assert len(warnings) == 1 and "800x450" in warnings[0].getMessage()
+
+
+def test_last_village_is_rescored_when_priority_changes(settings, db):
+    """Mini-fenêtre : changer la priorité recalcule tout de suite le village affiché."""
+    service = make_service(settings, db, analyzer=lambda _bgr: scout((1_400_000, 1_400_000, 0)))
+    service.start()
+    try:
+        assert wait_until(lambda: service.status().villages_saved == 1)
+    finally:
+        service.stop()
+    assert service.status().last_village.score == 80  # équilibré : or + élixir au maximum
+    service.rescore_last_village(ScoringPreferences(priority=Priority.DARK_ELIXIR))
+    village = service.status().last_village
+    assert (village.score, village.recommendation) == (20, "à passer")  # pas d'élixir noir

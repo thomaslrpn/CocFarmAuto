@@ -18,8 +18,9 @@ from app.analysis.relative import RelativeRanker
 from app.analysis.scoring import ScoringPreferences
 from app.api.deps import AppContext, get_context, get_session, get_user_settings
 from app.api.schemas import VillageDetail, VillagePage, VillageSummary
+from app.attacks import rate_attack
 from app.database.models import Village
-from app.database.repository import loot_rows
+from app.database.repository import attack_for_village, attack_to_summary, loot_rows
 from app.strategy.strategies import strategy_label
 from app.user_settings import UserSettings
 
@@ -127,6 +128,10 @@ def get_village(
         stored = json.loads(latest.result)
         result = ProfitabilityResult.model_validate(stored["profitability"])
         prefs_used = ScoringPreferences.model_validate(stored["preferences"])
+    attack = attack_for_village(session, village.id)
+    recap = attack_to_summary(attack) if attack else None
+    if recap is not None and recap.farm_score is None:  # attaque enregistrée avant la note du farm
+        recap = rate_attack(recap, user.preferences)
     return VillageDetail(
         **summary.model_dump(),
         town_hall_level=village.town_hall_level,
@@ -136,6 +141,7 @@ def get_village(
         warnings=result.warnings if result else [],
         preferences_used=prefs_used,
         image_url=f"/api/villages/{village.id}/image" if summary.has_image else None,
+        attack=recap,
     )
 
 

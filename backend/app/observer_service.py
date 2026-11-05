@@ -17,12 +17,15 @@ from datetime import datetime
 import numpy as np
 from pydantic import BaseModel
 
-from app.analysis.village_analysis import sheet_from_frame
+from app.analysis.scoring import ScoringPreferences
+from app.analysis.village_analysis import Loot, build_sheet, sheet_from_frame
+from app.attacks import AttackSummary, AttackTracker, rate_attack
 from app.capture.screen import CaptureError, grab_window
 from app.capture.window import WindowNotSupportedError, find_window
 from app.config import Settings
 from app.database.database import Database
-from app.database.repository import refresh_daily_statistics, save_evaluation
+from app.database.repository import refresh_daily_statistics, save_attack, save_evaluation
+from app.observation_models import ObservedVillage  # réexporté (alertes, API, tests)
 from app.observer import ScoutRecorder
 from app.strategy.advisor import VillageEvaluation, evaluate_village
 from app.strategy.strategies import strategy_label
@@ -45,17 +48,6 @@ class ObserverError(RuntimeError):
     """Démarrage impossible (déjà en cours, intervalle invalide...)."""
 
 
-class ObservedVillage(BaseModel):
-    village_id: int
-    analyzed_at: datetime
-    gold: int
-    elixir: int
-    dark_elixir: int
-    score: int
-    recommendation: str
-    strategy: str
-
-
 class ObserverStatus(BaseModel):
     running: bool
     started_at: datetime | None = None
@@ -67,6 +59,7 @@ class ObserverStatus(BaseModel):
     last_screen: str | None = None
     last_cycle_ms: float | None = None
     last_village: ObservedVillage | None = None
+    last_attack: AttackSummary | None = None  # récapitulatif de la dernière attaque
     last_error: str | None = None
 
 
@@ -119,6 +112,7 @@ class ObserverService:
         self._lock = threading.Lock()  # protège _status et _thread
         self._stop = threading.Event()
         self._screen_tracker = _ScreenTracker()
+        self._attacks = AttackTracker()
         self._thread: threading.Thread | None = None
         self._status = ObserverStatus(running=False)
 
@@ -134,6 +128,7 @@ class ObserverService:
             self._stop.clear()
             self._status = ObserverStatus(running=True, started_at=datetime.now(), interval_s=interval)
             self._screen_tracker = _ScreenTracker()
+            self._attacks = AttackTracker()
             self._thread = threading.Thread(target=self._run, args=(interval,), name="observer", daemon=True)
             self._thread.start()
         logger.info("Observation démarrée (intervalle %.1f s)", interval)
@@ -204,7 +199,40 @@ class ObserverService:
             sheet = sheet_from_frame(analysis, source_image=json_path.with_suffix(".png").name)
             if sheet is not None:
                 self._store(sheet)
+        attack = self._attacks.update(self._screen_tracker.confirmed, analysis.loot,
+                                      self.status().last_village, datetime.now())
+        if attack is not None:
+            self._store_attack(attack)
         return True
+
+    def rescore_last_village(self, prefs: ScoringPreferences) -> None:
+        """Recalcule le dernier village avec de nouveaux réglages (ex. priorité changée depuis la
+        mini-fenêtre). Affichage seulement : l'historique garde le score de son analyse."""
+        village = self.status().last_village
+        if village is None:
+            return
+        sheet = build_sheet(Loot(gold=village.gold, elixir=village.elixir, dark_elixir=village.dark_elixir),
+                            1.0, village.analyzed_at)
+        evaluation = evaluate_village(sheet, prefs)
+        self._update(last_village=village.model_copy(update={
+            "score": evaluation.result.score,
+            "recommendation": evaluation.result.recommendation.value,
+            "strategy": strategy_label(evaluation.strategy.key if evaluation.strategy else None),
+        }))
+
+    def _store_attack(self, attack: AttackSummary) -> None:
+        with self._db.session() as session:
+            prefs = load_user_settings(session, self._settings.data_dir).preferences  # réglages à jour
+            attack = rate_attack(attack, prefs)
+            save_attack(session, attack)
+        self._update(last_attack=attack)
+        logger.info(
+            "Attaque terminée (note %s/100, %s) : or %s / %s, élixir %s / %s, élixir noir %s / %s",
+            attack.farm_score, attack.farm_rating, attack.gained_gold, attack.available_gold, attack.gained_elixir, attack.available_elixir,
+            attack.gained_dark_elixir, attack.available_dark_elixir,
+            extra={"village_id": attack.village_id,
+                   "duration_s": round((attack.ended_at - attack.started_at).total_seconds())},
+        )
 
     def _store(self, sheet) -> None:  # type: ignore[no-untyped-def]
         started = time.perf_counter()

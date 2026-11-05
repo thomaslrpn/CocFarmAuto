@@ -56,6 +56,23 @@ CoC AutoFarm apparaît ensuite sur le bureau et dans le menu Démarrer.
    automatiquement en quelques secondes.
 5. Regarde la recommandation dans CoC AutoFarm, puis attaque ou passe au village suivant.
 
+### Jouer sans quitter le jeu des yeux
+
+- **Mini-fenêtre** : clique sur **Mini-fenêtre** en bas du menu. Une petite fenêtre reste affichée
+  par-dessus le jeu avec le score, le butin et la recommandation du dernier village, et un bouton pour
+  démarrer ou arrêter l'observation. Tu peux y changer la **ressource prioritaire** et le **butin visé**
+  sans quitter le jeu : le village affiché est recalculé aussitôt. Place-la dans un coin de l'écran :
+  elle s'y rouvrira la fois suivante.
+- **Alerte sonore** : dès qu'un village très intéressant apparaît, CoC AutoFarm joue un petit carillon,
+  même s'il est caché derrière le jeu. Tu peux enchaîner les recherches et ne regarder que quand il te
+  prévient. Réglages dans **Paramètres → Alertes** (seuil, son, notification Windows en option,
+  bouton **Tester l'alerte**).
+- **Récapitulatif d'attaque** : à la fin de chaque combat, la mini-fenêtre affiche ce que tu as récupéré
+  sur ce qui était disponible (or, élixir, élixir noir, en pourcentage) et une **note du farm** sur 100
+  (excellent, bon, moyen, faible), calculée comme le score des villages mais sur ce que tu as vraiment
+  récupéré. Le récapitulatif reste consultable dans la fiche du village (page **Analyse**, depuis
+  l'**Historique**).
+
 Les pages de l'application :
 
 | Page | Ce que tu y trouves |
@@ -64,15 +81,18 @@ Les pages de l'application :
 | **Analyse** | le dernier village : capture, butin lu, score détaillé, stratégie conseillée |
 | **Historique** | tous les villages, avec recherche, filtres et tri |
 | **Statistiques** | évolution du rendement, répartition des ressources, comparaison des stratégies |
-| **Paramètres** | ressource prioritaire, butin visé, coût de ton armée, fréquence d'analyse, mises à jour |
+| **Paramètres** | ressource prioritaire, butin visé, coût de ton armée, alertes, fréquence d'analyse, mises à jour |
 | **Logs** | ce que fait le logiciel, en direct (utile en cas de problème) |
 | **À propos** | version, nouveautés, mises à jour |
 
 ### Bien régler le score
 
 Dans **Paramètres**, indique :
-- ta **ressource prioritaire** (or, élixir, élixir noir ou équilibré) ;
-- le **butin que tu vises** par attaque : un village qui l'atteint obtient la note maximale ;
+- ta **ressource prioritaire** (or, élixir, élixir noir ou équilibré) : elle compte pour 80 % de la note.
+  Un village riche en or mais pauvre en élixir noir n'est donc pas « très intéressant » si tu farmes
+  l'élixir noir ;
+- le **butin que tu vises** par attaque : un village qui l'atteint obtient la note maximale. Si des
+  villages te semblent notés trop haut, augmente-le (par exemple 15 000 d'élixir noir au lieu de 10 000) ;
 - le **coût de ton armée** : il est déduit du butin pour juger si l'attaque vaut le coup.
 
 Les nouveaux réglages s'appliquent aux villages analysés ensuite.
@@ -108,6 +128,16 @@ Clash of Clans doit être lancé dans Google Play Games et la fenêtre ne doit p
 **Les montants lus sont faux ou absents**
 Agrandis la fenêtre du jeu (au moins 960 × 540, plein écran conseillé). La page **Logs** signale une
 fenêtre trop petite.
+
+**Je n'entends pas l'alerte**
+Utilise **Paramètres → Alertes → Tester l'alerte** et vérifie le volume de Windows. Si tu as activé la
+notification Windows et qu'elle n'apparaît pas, le mode « Ne pas déranger » est sans doute actif (il
+s'active souvent tout seul pendant les jeux) : **Paramètres Windows → Système → Notifications**.
+
+**Le récapitulatif d'attaque manque ou semble faux**
+Il est calculé en lisant le « Butin disponible » affiché pendant le combat : l'observation doit être
+démarrée avant l'attaque. Un sort ou une explosion qui masque les chiffres peut fausser une lecture ;
+le logiciel écarte les lectures isolées, et affiche « non lu » quand il n'a rien pu lire de fiable.
 
 **« Le moteur d'analyse n'a pas pu démarrer »**
 Ferme puis relance CoC AutoFarm. Si le problème continue, le détail est dans

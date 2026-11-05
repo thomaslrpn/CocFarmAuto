@@ -9,9 +9,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.analysis.scoring import ScoringPreferences
+from app.attacks import AttackSummary
 from app.analysis.village_analysis import Loot, VillageSheet, build_sheet
 from app.config import APP_VERSION
-from app.database.models import Analysis, DailyStatistics, Setting, Village
+from app.database.models import Analysis, Attack, DailyStatistics, Setting, Village
 from app.strategy.advisor import VillageEvaluation
 
 
@@ -113,3 +114,25 @@ def village_to_sheet(village: Village) -> VillageSheet:
         Loot(gold=village.gold, elixir=village.elixir, dark_elixir=village.dark_elixir),
         village.detection_confidence, village.analyzed_at, village.source_image,
     )
+
+
+# --- Attaques ------------------------------------------------------------------
+
+_ATTACK_FIELDS = tuple(AttackSummary.model_fields)
+
+
+def save_attack(session: Session, summary: AttackSummary) -> Attack:
+    attack = Attack(**summary.model_dump())
+    session.add(attack)
+    session.flush()  # attribue l'identifiant
+    return attack
+
+
+def attack_to_summary(attack: Attack) -> AttackSummary:
+    return AttackSummary(**{name: getattr(attack, name) for name in _ATTACK_FIELDS})
+
+
+def attack_for_village(session: Session, village_id: int) -> Attack | None:
+    """Dernière attaque menée sur ce village (None s'il n'a pas été attaqué pendant l'observation)."""
+    return session.scalar(
+        select(Attack).where(Attack.village_id == village_id).order_by(Attack.ended_at.desc()).limit(1))

@@ -38,6 +38,11 @@ class AppPreferences(BaseModel):
     update_channel: Literal["stable", "beta"] = Field(
         default="stable", description="stable : versions finalisées ; beta : reçoit aussi les versions de test")
     auto_check_updates: bool = Field(default=True, description="vérifier les mises à jour au démarrage puis toutes les 6 h")
+    alert_level: Literal["off", "very_interesting", "interesting"] = Field(
+        default="very_interesting",
+        description="alerte pour les villages : off, very_interesting (très intéressants), interesting (intéressants ou mieux)")
+    alert_sound: bool = Field(default=True, description="jouer un son lors d'une alerte")
+    alert_notification: bool = Field(default=False, description="afficher aussi une notification Windows lors d'une alerte")
 
 
 @dataclass(frozen=True)

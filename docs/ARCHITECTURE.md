@@ -96,3 +96,23 @@ Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–
 - Licence : GNU AGPL v3 (imposée par Ultralytics YOLO, prévu pour la détection des bâtiments). Texte officiel dans `LICENSE`, affiché par l'installateur.
 - Identité : icône originale (pièce d'or + loupe, aucun élément du jeu), `desktop/branding/`. Fond de fenêtre sombre dès l'ouverture (pas de flash blanc avant l'écran de démarrage).
 - Documentation : README = guide utilisateur ; `docs/DEVELOPPEMENT.md` = guide de développement.
+
+## 12. Pendant le jeu — mini-fenêtre et alertes
+
+- Les alertes partent du moteur, pas de l'interface : une fenêtre WebView cachée derrière le jeu ou réduite voit ses minuteries ralenties (jusqu'à une fois par minute), elle raterait des villages. `app/alerts.py` est branché sur `on_village` de l'observation et relit les réglages à chaque village.
+- Son : carillon propre à l'application (`backend/app/assets/alert.wav`, généré par `make_alert_sound.py`), joué par `winsound` (module standard Windows) dans le moteur. Notification Windows désactivée par défaut (le son suffit). Notification : le moteur écrit `COCAF-EVENT {json}` sur sa sortie standard (UTF-8 forcé par `PYTHONIOENCODING`) ; `src-tauri/src/events.rs` la lit en continu dans un fil dédié et affiche une notification Windows silencieuse (`tauri-plugin-notification`), le son restant un réglage séparé. Un protocole par sortie standard évite un second serveur ou un sondage HTTP côté Rust.
+- Mini-fenêtre : seconde fenêtre Tauri `overlay` (toujours au-dessus, hors barre des tâches) créée par la commande `toggle_overlay` ; même application React, qui affiche `OverlayPage` quand le libellé de la fenêtre est `overlay` (pas de menu ni de vérification des mises à jour). Elle sonde `GET /api/observer` chaque seconde : toujours visible, elle n'est pas ralentie. Fermer la fenêtre principale ferme l'application entière.
+- Ni l'une ni l'autre n'agit sur le jeu (aucun clic, aucune touche) : le cahier des charges exclut l'automatisation des combats.
+
+## 13. Récapitulatif d'attaque
+
+- Pendant un combat, le jeu affiche le « Butin disponible » RESTANT (même zone que pendant la recherche, déjà lue par la vision) : récupéré = butin au départ − butin restant à la fin. Aucun nouvel élément visuel à reconnaître.
+- `app/attacks.py` (`AttackTracker`) suit l'écran confirmé image par image. Départ = butin lu pendant la recherche si le combat la suit de moins de 3 minutes (sinon première lecture fiable du combat, attaque non rattachée à un village). Fin = l'écran de combat disparaît (changement confirmé sur 2 images).
+- Robustesse : seules les lectures de confiance ≥ 0,6 comptent ; une lecture supérieure au butin de départ est ignorée ; le butin restant est la dernière valeur lue au moins deux fois parmi les 5 dernières (une lecture isolée faussée par un sort est écartée), sinon la dernière lecture.
+- Stockage : table `attacks` (migration 2, `schema_version` 2), liée au village (`ON DELETE SET NULL`). Exposé par `GET /api/observer` (`last_attack`) et `GET /api/villages/{id}` (`attack`).
+- Note du farm (`rate_attack`) : `compute_profitability` appliqué au butin récupéré (une ressource non lue compte 0), avec les réglages au moment de la fin du combat ; appréciation excellent / bon / moyen / faible sur les seuils des recommandations. Colonnes ajoutées par la migration 3 (la migration 2 avait déjà été appliquée par une version de test : jamais modifier une migration appliquée). Attaques plus anciennes sans note : notées à l'affichage avec les réglages actuels.
+
+## 14. Ressource prioritaire
+
+- Poids : équilibré 40/40/20 (inchangé) ; ressource prioritaire 80 %, les deux autres 10 % (auparavant 60/20/20). Constat sur des villages réels avec l'élixir noir prioritaire : or et élixir au maximum donnaient déjà 40 points, d'où des villages pauvres en élixir noir classés « intéressant ». Désormais, sans la ressource prioritaire, un village plafonne à 20/100.
+- Mini-fenêtre : priorité et butin visé de cette ressource modifiables (`PUT /api/settings`) ; `ObserverService.rescore_last_village` recalcule le village affiché (affichage seulement, l'historique garde le score de son analyse).

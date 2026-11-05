@@ -71,6 +71,23 @@ export interface ObservedVillage {
   strategy: string;
 }
 
+export type FarmRating = "excellent" | "bon" | "moyen" | "faible";
+
+/** Récapitulatif d'une attaque (gained_* = null : ressource non lue pendant le combat). */
+export interface AttackSummary {
+  village_id: number | null;
+  started_at: string;
+  ended_at: string;
+  available_gold: number;
+  available_elixir: number;
+  available_dark_elixir: number;
+  gained_gold: number | null;
+  gained_elixir: number | null;
+  gained_dark_elixir: number | null;
+  farm_score: number | null; // note du farm sur 100 (butin récupéré, selon tes réglages)
+  farm_rating: FarmRating | null;
+}
+
 export interface ObserverStatus {
   running: boolean;
   started_at: string | null;
@@ -82,6 +99,7 @@ export interface ObserverStatus {
   last_screen: ScreenName | null;
   last_cycle_ms: number | null;
   last_village: ObservedVillage | null;
+  last_attack: AttackSummary | null;
   last_error: string | null;
 }
 
@@ -133,6 +151,7 @@ export interface VillageDetail extends VillageSummary {
   warnings: string[];
   preferences_used: ScoringPreferences | null;
   image_url: string | null;
+  attack: AttackSummary | null;
 }
 
 export interface CaptureRates {
@@ -150,11 +169,15 @@ export interface SimulationAssumptions {
 }
 
 export type UpdateChannel = "stable" | "beta";
+export type AlertLevel = "off" | "very_interesting" | "interesting";
 
 export interface AppPreferences {
   observe_interval_s: number;
   update_channel: UpdateChannel;
   auto_check_updates: boolean;
+  alert_level: AlertLevel;
+  alert_sound: boolean;
+  alert_notification: boolean;
 }
 
 export interface UserSettings {

@@ -120,6 +120,7 @@ export const api = {
   compareStrategies: () => request<StrategyComparison>("/strategies/compare"),
   logs: (afterId = 0, level: LogLevel = "INFO") =>
     request<LogEntry[]>("/logs", {}, { after_id: afterId, level, limit: 500 }),
+  testAlert: () => request<{ sound: boolean; notification: boolean }>("/alerts/test", { method: "POST" }),
   backupDatabase: (label: string) =>
     request<{ path: string }>("/database/backup", { method: "POST" }, { label }),
 };

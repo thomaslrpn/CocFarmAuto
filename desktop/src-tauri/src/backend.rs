@@ -109,8 +109,11 @@ fn spawn(app: &AppHandle) -> Result<(BackendConfig, Child), String> {
         .args(["--port", &port.to_string(), "--parent-pid", &std::process::id().to_string()])
         .current_dir(&workdir)
         .env("COC_AUTOFARM_TOKEN", &token)
+        // Sortie standard = canal d'événements (alertes), lue par events.rs : en UTF-8, sans tampon.
+        .env("PYTHONIOENCODING", "utf-8")
+        .env("PYTHONUNBUFFERED", "1")
         .stdin(Stdio::null())
-        .stdout(Stdio::null())
+        .stdout(Stdio::piped())
         .stderr(Stdio::null()); // le moteur écrit ses journaux dans %LOCALAPPDATA%\CoCAutoFarm\logs
     #[cfg(windows)]
     {
@@ -118,9 +121,13 @@ fn spawn(app: &AppHandle) -> Result<(BackendConfig, Child), String> {
         const CREATE_NO_WINDOW: u32 = 0x0800_0000; // pas de console noire
         command.creation_flags(CREATE_NO_WINDOW);
     }
-    let child = command
+    let mut child = command
         .spawn()
         .map_err(|e| format!("impossible de lancer {} : {e}", program.display()))?;
+    if let Some(stdout) = child.stdout.take() {
+        let app = app.clone();
+        std::thread::spawn(move || crate::events::forward(app, stdout));
+    }
     Ok((BackendConfig { url: format!("http://{HOST}:{port}"), token }, child))
 }
 

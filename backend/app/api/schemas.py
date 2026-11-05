@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.analysis.profitability import ScoreFactor
 from app.analysis.scoring import ScoringPreferences
+from app.attacks import AttackSummary
 from app.strategy.simulator import SimulationResult
 from app.strategy.strategies import SimulationAssumptions
 from app.user_settings import AppPreferences
@@ -63,6 +64,7 @@ class VillageDetail(VillageSummary):
     warnings: list[str]
     preferences_used: ScoringPreferences | None
     image_url: str | None
+    attack: AttackSummary | None = None  # récapitulatif si ce village a été attaqué pendant l'observation
 
 
 class DayStatistics(BaseModel):

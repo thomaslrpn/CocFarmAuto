@@ -5,6 +5,7 @@ Correspondance avec le cahier des charges (§10), noms en anglais dans le code :
 - analyses          <- Table Analyses (village_id, date_analyse, resultat, confiance_detection)
 - daily_statistics  <- Table Statistiques (date, nombre_villages, ressources_analysees, score_moyen)
 - settings          <- Table Paramètres (nom, valeur)
+- attacks           <- récapitulatifs d'attaque (butin disponible / récupéré), ajoutée en 0.4.0
 
 IMPORTANT : le schéma réel est créé par les MIGRATIONS (migrations.py). Toute
 modification ici doit s'accompagner d'une nouvelle migration (un test le vérifie).
@@ -77,3 +78,22 @@ class Setting(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String, unique=True)
     value: Mapped[str] = mapped_column(Text)
+
+
+class Attack(Base):
+    """Une attaque observée : butin disponible au départ et butin récupéré (None = non lu)."""
+
+    __tablename__ = "attacks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    village_id: Mapped[int | None] = mapped_column(ForeignKey("villages.id", ondelete="SET NULL"), index=True)
+    started_at: Mapped[datetime] = mapped_column(DateTime)
+    ended_at: Mapped[datetime] = mapped_column(DateTime, index=True)
+    available_gold: Mapped[int] = mapped_column(Integer)
+    available_elixir: Mapped[int] = mapped_column(Integer)
+    available_dark_elixir: Mapped[int] = mapped_column(Integer)
+    gained_gold: Mapped[int | None] = mapped_column(Integer)
+    gained_elixir: Mapped[int | None] = mapped_column(Integer)
+    gained_dark_elixir: Mapped[int | None] = mapped_column(Integer)
+    farm_score: Mapped[int | None] = mapped_column(Integer)  # note du farm sur 100 (butin récupéré)
+    farm_rating: Mapped[str | None] = mapped_column(String)  # excellent, bon, moyen, faible

@@ -4,6 +4,7 @@ import {
   History,
   Info,
   LayoutDashboard,
+  PictureInPicture2,
   ScanSearch,
   Settings,
   Sparkles,
@@ -12,6 +13,7 @@ import {
 import { Link, NavLink, Outlet } from "react-router";
 import { useUpdater } from "../hooks/useUpdater";
 import { AppLogo } from "./AppLogo";
+import { isDesktopApp, toggleOverlay } from "../services/desktop";
 import { compareVersions } from "../services/versions";
 
 interface NavItem {
@@ -59,6 +61,7 @@ export function Layout() {
           ))}
         </ul>
         <div className="mt-auto">
+          <OverlayButton />
           <UpdateNotice />
           <p className="px-2 text-xs text-ink-muted">Outil d'analyse — aucune action sur le jeu.</p>
         </div>
@@ -82,5 +85,18 @@ function UpdateNotice() {
         {compareVersions(update.version, update.currentVersion) < 0 ? "Version stable" : "Mise à jour"} {update.version} disponible
       </span>
     </Link>
+  );
+}
+
+/** Ouvre / ferme la mini-fenêtre « toujours au-dessus » du jeu (application installée uniquement). */
+function OverlayButton() {
+  if (!isDesktopApp()) return null;
+  return (
+    <button type="button" onClick={() => void toggleOverlay()}
+      title="Petite fenêtre toujours visible par-dessus le jeu : score, butin et recommandation du dernier village"
+      className="mb-3 flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-ink-secondary hover:bg-surface-raised hover:text-ink">
+      <PictureInPicture2 aria-hidden className="size-4" />
+      Mini-fenêtre
+    </button>
   );
 }

@@ -7,6 +7,8 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
+from app.alerts import AlertService
+from app.attacks import AttackSummary
 from app.analysis.relative import RelativeRanker
 from app.analysis.scoring import ScoringPreferences
 from app.analysis.village_analysis import Loot, build_sheet
@@ -15,7 +17,7 @@ from app.api.deps import AppContext
 from app.config import Settings
 from app.database.database import Database
 from app.database.migrations import LATEST_VERSION
-from app.database.repository import refresh_daily_statistics, save_evaluation
+from app.database.repository import refresh_daily_statistics, save_attack, save_evaluation
 from app.strategy.advisor import evaluate_village
 
 TOKEN = "jeton-de-test"
@@ -218,7 +220,8 @@ def test_village_thumbnail(client, ctx):
 
 def test_app_preferences_setting(client):
     assert client.get("/api/settings", headers=AUTH).json()["app"] == {
-        "observe_interval_s": 1.0, "update_channel": "stable", "auto_check_updates": True}
+        "observe_interval_s": 1.0, "update_channel": "stable", "auto_check_updates": True,
+        "alert_level": "very_interesting", "alert_sound": True, "alert_notification": False}
     updated = put_settings(client, {"app": {"observe_interval_s": 0.5}}).json()
     assert updated["app"]["observe_interval_s"] == 0.5
     assert put_settings(client, {"app": {"observe_interval_s": 0.01}}).status_code == 422
@@ -254,5 +257,28 @@ def test_database_backup(client, ctx):
 
 def test_update_settings(client):
     updated = put_settings(client, {"app": {"update_channel": "beta", "auto_check_updates": False}}).json()["app"]
-    assert updated == {"observe_interval_s": 1.0, "update_channel": "beta", "auto_check_updates": False}
+    assert updated["update_channel"] == "beta" and updated["auto_check_updates"] is False
+    assert updated["observe_interval_s"] == 1.0  # les autres réglages sont conservés
     assert put_settings(client, {"app": {"update_channel": "nightly"}}).status_code == 422
+
+
+def test_alert_test_endpoint(ctx):
+    events = []
+    context = AppContext(settings=ctx.settings, db=ctx.db, token=TOKEN, vision_ready=True,
+                         alerts=AlertService(ctx.db, ctx.settings.data_dir, play_sound=lambda: None, emit=events.append))
+    with TestClient(create_app(context)) as c:
+        assert c.post("/api/alerts/test").status_code == 401
+        assert c.post("/api/alerts/test", headers=AUTH).json() == {"sound": True, "notification": False}
+    assert events == []  # notification désactivée par défaut : son seulement
+
+
+def test_village_detail_includes_attack_recap(client, ctx):
+    village_id = add_village(ctx, 650_000, 720_000, 5_000)
+    assert client.get(f"/api/villages/{village_id}", headers=AUTH).json()["attack"] is None
+    with ctx.db.session() as session:
+        save_attack(session, AttackSummary(
+            village_id=village_id, started_at=datetime(2026, 11, 5, 10, 1), ended_at=datetime(2026, 11, 5, 10, 3),
+            available_gold=650_000, available_elixir=720_000, available_dark_elixir=5_000,
+            gained_gold=520_000, gained_elixir=576_000, gained_dark_elixir=None))
+    attack = client.get(f"/api/villages/{village_id}", headers=AUTH).json()["attack"]
+    assert attack["gained_gold"] == 520_000 and attack["gained_dark_elixir"] is None

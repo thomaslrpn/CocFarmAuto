@@ -3,6 +3,26 @@
 Toutes les évolutions notables de CoC AutoFarm. Format inspiré de « Keep a Changelog »,
 versions selon Semantic Versioning (1.0.0 = première version stable).
 
+## 1.0.0 — en développement
+
+Première version stable.
+
+### Pendant le jeu
+- Mini-fenêtre toujours au-dessus du jeu : score, butin et recommandation du dernier village, démarrage
+  et arrêt de l'observation. Position et taille mémorisées.
+- Alerte sonore quand un bon village apparaît (carillon propre à l'application), même avec l'application
+  cachée derrière le jeu. Seuil réglable (très intéressant, ou intéressant et mieux), notification
+  Windows en option, bouton « Tester l'alerte ».
+- Récapitulatif de fin d'attaque : butin récupéré sur butin disponible, par ressource, avec une note
+  du farm sur 100 (excellent, bon, moyen, faible), dans la mini-fenêtre et dans la fiche du village.
+- Ressource prioritaire et butin visé modifiables directement dans la mini-fenêtre ; le village
+  affiché est recalculé aussitôt.
+
+### Score
+- La ressource prioritaire compte désormais pour 80 % de la note (au lieu de 60 %) : un village riche
+  en or et en élixir mais pauvre en élixir noir n'est plus « très intéressant » quand l'élixir noir est
+  prioritaire. Le mode équilibré ne change pas.
+
 ## 0.3.0 — 2026-11-05
 
 ### Reconnaissance

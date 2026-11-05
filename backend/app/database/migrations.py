@@ -64,8 +64,34 @@ CREATE TABLE settings (
 );
 """
 
+_V2_ATTACKS = """
+CREATE TABLE attacks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    village_id INTEGER REFERENCES villages (id) ON DELETE SET NULL,
+    started_at DATETIME NOT NULL,
+    ended_at DATETIME NOT NULL,
+    available_gold INTEGER NOT NULL,
+    available_elixir INTEGER NOT NULL,
+    available_dark_elixir INTEGER NOT NULL,
+    gained_gold INTEGER,
+    gained_elixir INTEGER,
+    gained_dark_elixir INTEGER
+);
+CREATE INDEX ix_attacks_village_id ON attacks (village_id);
+CREATE INDEX ix_attacks_ended_at ON attacks (ended_at);
+"""
+
+_V3_ATTACK_FARM_SCORE = """
+ALTER TABLE attacks ADD COLUMN farm_score INTEGER;
+ALTER TABLE attacks ADD COLUMN farm_rating VARCHAR;
+"""
+
 # Index i : script SQL faisant passer de la version i à la version i+1.
-MIGRATIONS: tuple[str, ...] = (_V1_INITIAL_SCHEMA,)
+MIGRATIONS: tuple[str, ...] = (
+    _V1_INITIAL_SCHEMA,
+    _V2_ATTACKS,  # 1.0.0 : récapitulatifs d'attaque
+    _V3_ATTACK_FARM_SCORE,  # 1.0.0 : note du farm (la v2 était déjà appliquée par une version de test)
+)
 LATEST_VERSION = len(MIGRATIONS)
 
 

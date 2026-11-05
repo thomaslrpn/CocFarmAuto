@@ -120,3 +120,21 @@ def test_observations_are_loaded_and_scored(tmp_path):
     ScoutRecorder(tmp_path, stable_frames=1).process(np.zeros((4, 4, 3), np.uint8), analysis)
     sheets = load_observations(tmp_path)
     assert len(sheets) == 1 and compute_profitability(sheets[0]).score == 100
+
+
+def test_priority_resource_dominates_the_score():
+    """Priorité élixir noir : beaucoup d'or et d'élixir mais peu d'élixir noir ne suffit pas."""
+    prefs = ScoringPreferences(priority=Priority.DARK_ELIXIR)
+    rich_but_no_dark = build_sheet(Loot(gold=1_400_000, elixir=1_400_000, dark_elixir=0), 0.9)
+    rich_little_dark = build_sheet(Loot(gold=1_400_000, elixir=1_400_000, dark_elixir=4_275), 0.9)
+    lots_of_dark = build_sheet(Loot(gold=100_000, elixir=100_000, dark_elixir=12_000), 0.9)
+    assert compute_profitability(rich_but_no_dark, prefs).score == 20
+    assert compute_profitability(rich_but_no_dark, prefs).recommendation == Recommendation.SKIP
+    assert compute_profitability(rich_little_dark, prefs).recommendation == Recommendation.AVERAGE
+    assert compute_profitability(lots_of_dark, prefs).recommendation == Recommendation.VERY_GOOD
+
+
+def test_balanced_priority_is_unchanged():
+    result = compute_profitability(build_sheet(Loot(gold=600_000, elixir=600_000, dark_elixir=0), 0.9),
+                                   ScoringPreferences())
+    assert result.score == 80  # or 40 + élixir 40 : comme avant

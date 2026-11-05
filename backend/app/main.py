@@ -17,6 +17,7 @@ import sys
 
 import uvicorn
 
+from app.alerts import AlertService
 from app.api.app import create_app
 from app.api.deps import AppContext
 from app.config import APP_VERSION, Settings
@@ -49,15 +50,16 @@ class ShutdownSwitch:
 def build_context(settings: Settings, shutdown: ShutdownSwitch | None = None) -> AppContext:
     db = Database.open(settings.database_path, settings.backups_dir)
     observer = None
+    alerts = AlertService(db, settings.data_dir)
     try:
         models = VisionModels.load()
         observer = ObserverService(settings, db, game_window_frames(settings),
-                                   lambda bgr: analyze_frame(bgr, models))
+                                   lambda bgr: analyze_frame(bgr, models), on_village=alerts.on_village)
     except TemplatesNotFoundError as exc:
         logger.error("Modèles de vision absents : %s", exc)
     token = os.environ.get(TOKEN_ENV) or secrets.token_urlsafe(24)
     return AppContext(settings=settings, db=db, token=token, vision_ready=observer is not None,
-                      observer=observer, request_shutdown=shutdown)
+                      observer=observer, request_shutdown=shutdown, alerts=alerts)
 
 
 def main() -> int:

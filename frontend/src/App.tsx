@@ -3,11 +3,13 @@ import { Layout } from "./components/Layout";
 import { PagePlaceholder } from "./components/PagePlaceholder";
 import { TokenGate } from "./components/TokenGate";
 import { UpdaterProvider } from "./hooks/useUpdater";
+import { isOverlayWindow } from "./services/desktop";
 import { AboutPage } from "./pages/AboutPage";
 import { AnalysisPage } from "./pages/AnalysisPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LogsPage } from "./pages/LogsPage";
+import { OverlayPage } from "./pages/OverlayPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { StatisticsPage } from "./pages/StatisticsPage";
 
@@ -16,6 +18,15 @@ import { StatisticsPage } from "./pages/StatisticsPage";
  * qu'une fois l'application embarquée dans Tauri (fichiers locaux, phase 7).
  */
 export function App() {
+  // Mini-fenêtre « toujours au-dessus » : sa propre page, sans menu ni vérification des mises à jour.
+  if (isOverlayWindow()) {
+    return (
+      <TokenGate>
+        <OverlayPage />
+      </TokenGate>
+    );
+  }
+
   return (
     <TokenGate>
       <UpdaterProvider>

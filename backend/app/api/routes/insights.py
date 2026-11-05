@@ -131,6 +131,7 @@ def update_settings(
     update: UserSettingsUpdate,
     session: Session = Depends(get_session),
     user: UserSettings = Depends(get_user_settings),
+    context: AppContext = Depends(get_context),
 ) -> UserSettingsModel:
     new = UserSettings(
         preferences=_apply(user.preferences, update.preferences, "preferences"),
@@ -138,6 +139,8 @@ def update_settings(
         app=_apply(user.app, update.app, "app"),
     )
     save_user_settings(session, new)
+    if context.observer is not None and new.preferences != user.preferences:
+        context.observer.rescore_last_village(new.preferences)  # mini-fenêtre à jour tout de suite
     return UserSettingsModel(preferences=new.preferences, simulation=new.simulation, app=new.app)
 
 
@@ -164,3 +167,10 @@ def backup(
     except (OSError, sqlite3.Error) as exc:
         raise HTTPException(500, f"Sauvegarde impossible : {exc}") from exc
     return {"path": str(path)}
+
+
+@router.post("/alerts/test", tags=["moteur"], summary="Déclencher une alerte d'exemple (son + notification)")
+def test_alert(context: AppContext = Depends(get_context)) -> dict[str, bool]:
+    if context.alerts is None:
+        raise HTTPException(409, "Alertes indisponibles pour ce moteur")
+    return context.alerts.test()

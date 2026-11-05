@@ -1,10 +1,10 @@
-import { AlertTriangle, CheckCircle2, Loader2, RotateCcw, Save } from "lucide-react";
+import { AlertTriangle, BellRing, CheckCircle2, Loader2, RotateCcw, Save } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { Card } from "../components/Card";
 import { NumberField } from "../components/NumberField";
 import { PRIORITY_LABELS } from "../constants/strategies";
 import { ApiError, api } from "../services/api";
-import type { Loot, Priority, UpdateChannel, UserSettings, ValidationIssue } from "../types/api";
+import type { AlertLevel, Loot, Priority, UpdateChannel, UserSettings, ValidationIssue } from "../types/api";
 
 type Feedback = { kind: "ok"; message: string } | { kind: "error"; message: string; issues: ValidationIssue[] };
 
@@ -86,6 +86,9 @@ export function SettingsPage() {
                   <option key={key} value={key}>{PRIORITY_LABELS[key]}</option>
                 ))}
               </select>
+              <span className="text-xs text-ink-muted">
+                {p.priority === "balanced" ? "Or et élixir 40 % chacun, élixir noir 20 %." : "Cette ressource compte pour 80 % de la note, les autres 10 % chacune."}
+              </span>
             </div>
             <NumberField label="Importance de l'élixir noir" value={p.dark_elixir_importance} step={0.1} min={0} max={5}
               suffix="×" onChange={(v) => setPrefs({ dark_elixir_importance: v ?? 0 })}
@@ -149,6 +152,31 @@ export function SettingsPage() {
         </div>
       </Card>
 
+      <Card title="Alertes">
+        <p className="mb-4 text-sm text-ink-secondary">
+          Préviens-toi quand un bon village apparaît pendant l'observation, même si CoC AutoFarm est caché
+          derrière le jeu. S'applique immédiatement.
+        </p>
+        <Grid>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="alert-level" className="text-xs text-ink-muted">Alerter pour</label>
+            <select id="alert-level" value={draft.app.alert_level}
+              onChange={(e) => setApp({ alert_level: e.target.value as AlertLevel })}
+              className="rounded-lg border border-line bg-page px-2.5 py-1.5 text-sm outline-none focus:border-accent">
+              <option value="very_interesting">Villages très intéressants</option>
+              <option value="interesting">Villages intéressants ou mieux</option>
+              <option value="off">Jamais (alertes désactivées)</option>
+            </select>
+          </div>
+          <Checkbox label="Jouer un son" checked={draft.app.alert_sound}
+            disabled={draft.app.alert_level === "off"} onChange={(v) => setApp({ alert_sound: v })} />
+          <Checkbox label="Aussi une notification Windows" checked={draft.app.alert_notification}
+            disabled={draft.app.alert_level === "off"} onChange={(v) => setApp({ alert_notification: v })}
+            help="Peut être masquée par le mode « Ne pas déranger » de Windows pendant les jeux." />
+        </Grid>
+        <TestAlertButton disabled={dirty || draft.app.alert_level === "off"} unsaved={dirty} />
+      </Card>
+
       <Card title="Application">
         <Grid>
           <NumberField label="Fréquence des analyses" value={draft.app.observe_interval_s} min={0.2} max={60} step={0.1} suffix="s"
@@ -169,15 +197,9 @@ export function SettingsPage() {
                 : "Uniquement les versions finalisées."}
             </span>
           </div>
-          <label className="flex items-start gap-2 self-center text-sm">
-            <input type="checkbox" checked={draft.app.auto_check_updates}
-              onChange={(e) => setApp({ auto_check_updates: e.target.checked })}
-              className="mt-0.5 size-4 accent-[var(--color-accent)]" />
-            <span>
-              Rechercher les mises à jour automatiquement
-              <span className="block text-xs text-ink-muted">Au démarrage puis toutes les 6 h. Sinon : bouton dans À propos.</span>
-            </span>
-          </label>
+          <Checkbox label="Rechercher les mises à jour automatiquement" checked={draft.app.auto_check_updates}
+            onChange={(v) => setApp({ auto_check_updates: v })}
+            help="Au démarrage puis toutes les 6 h. Sinon : bouton dans À propos." />
         </Grid>
         <dl className="mt-5 grid gap-x-6 gap-y-2 border-t border-line pt-4 text-sm sm:grid-cols-3">
           <Info label="Résolution de capture">automatique (taille de la fenêtre du jeu)</Info>
@@ -240,5 +262,49 @@ function ErrorBox({ message }: { message: string }) {
     <p className="flex items-center gap-2 rounded-lg border border-serious/40 bg-serious/10 px-3 py-2 text-sm text-serious">
       <AlertTriangle aria-hidden className="size-4" /> {message}
     </p>
+  );
+}
+
+function Checkbox({ label, checked, onChange, help, disabled = false }: {
+  label: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  help?: string;
+  disabled?: boolean;
+}) {
+  return (
+    <label className={`flex items-start gap-2 self-center text-sm ${disabled ? "opacity-50" : ""}`}>
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 size-4 accent-[var(--color-accent)]" />
+      <span>
+        {label}
+        {help && <span className="block text-xs text-ink-muted">{help}</span>}
+      </span>
+    </label>
+  );
+}
+
+/** Déclenche une alerte d'exemple avec les réglages ENREGISTRÉS (son + notification). */
+function TestAlertButton({ disabled, unsaved }: { disabled: boolean; unsaved: boolean }) {
+  const [result, setResult] = useState<string>();
+  const run = async () => {
+    try {
+      const { sound, notification } = await api.testAlert();
+      const parts = [sound && "son", notification && "notification"].filter(Boolean);
+      setResult(parts.length ? `Alerte envoyée (${parts.join(" + ")}).` : "Son et notification sont désactivés.");
+    } catch (err) {
+      setResult(`Échec : ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line pt-4">
+      <button type="button" onClick={() => void run()} disabled={disabled}
+        className="inline-flex items-center gap-2 rounded-lg border border-line px-3 py-1.5 text-sm hover:bg-surface-raised disabled:opacity-50">
+        <BellRing aria-hidden className="size-4" /> Tester l'alerte
+      </button>
+      <span className="text-xs text-ink-muted">
+        {unsaved ? "Enregistre tes réglages pour les tester." : result ?? "Joue le son et affiche une notification d'exemple."}
+      </span>
+    </div>
   );
 }
