@@ -122,3 +122,16 @@ npm test              # tests (Vitest)
 npm run typecheck     # vérification TypeScript
 npm run build         # version de production (frontend/dist)
 ```
+
+## Phase 7 — Application de bureau (Tauri 2)
+
+Prérequis (une fois) : Rust (`rustup`, chaîne `stable-msvc`) et Visual Studio Build Tools 2022 (C++).
+
+```powershell
+cd desktop
+npm install
+npm run dev        # fenêtre de développement (lance aussi le serveur Vite du frontend)
+npm run build      # version de production (desktop/src-tauri/target/release)
+```
+
+Étape 7.1 : le moteur se lance encore à la main (`python -m app.main`) ; la fenêtre demande son jeton au premier lancement.

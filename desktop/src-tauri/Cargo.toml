@@ -1,0 +1,27 @@
+[package]
+name = "coc-autofarm"
+version = "0.1.0"
+description = "CoC AutoFarm - application de bureau"
+edition = "2021"
+publish = false
+
+# Bibliothèque + exécutable : convention Tauri 2 (le code vit dans lib.rs).
+[lib]
+name = "coc_autofarm_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+# Exécutable plus petit et plus rapide pour la distribution.
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true
