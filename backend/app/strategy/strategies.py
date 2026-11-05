@@ -81,3 +81,10 @@ DEFAULT_STRATEGIES: tuple[Strategy, ...] = (
 def load_assumptions(data_dir: Path) -> SimulationAssumptions:
     """Hypothèses de simulation de l'utilisateur (`simulation.json`), sinon valeurs par défaut."""
     return load_user_json(data_dir, ASSUMPTIONS_FILE, SimulationAssumptions)
+
+
+def strategy_label(key: str | None) -> str:
+    """Nom lisible d'une stratégie à partir de sa clé (« à passer » si aucune)."""
+    if key is None:
+        return "à passer"
+    return next((s.label for s in DEFAULT_STRATEGIES if s.key == key), key)

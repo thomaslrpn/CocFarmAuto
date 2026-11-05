@@ -12,8 +12,8 @@ from pathlib import Path
 
 from app.analysis.scoring import load_preferences
 from app.analysis.village_analysis import Resource
-from app.analyze_cli import load_observations
 from app.config import Settings
+from app.observer import load_observations
 from app.strategy.simulator import SimulationResult, compare_strategies
 from app.strategy.strategies import ASSUMPTIONS_FILE, DEFAULT_STRATEGIES, load_assumptions
 

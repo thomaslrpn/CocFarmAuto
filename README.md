@@ -68,3 +68,14 @@ Hypothèses (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\simulation.json`, par exem
   "search_cost_gold": 1500
 }
 ```
+
+## Phase 5 — Base de données
+
+```powershell
+python -m app.db_cli import           # importe les villages observés (sans doublon)
+python -m app.db_cli stats            # résumé et statistiques par jour
+python -m app.db_cli backup           # sauvegarde manuelle
+```
+
+Base : `%LOCALAPPDATA%\CoCAutoFarmutofarm.db` ; sauvegardes : `%LOCALAPPDATA%\CoCAutoFarmackups`.
+Le mode observation enregistre désormais chaque village directement en base.

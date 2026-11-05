@@ -18,8 +18,9 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
+from app.analysis.village_analysis import Loot, VillageSheet, build_sheet
 from app.config import APP_VERSION
 from app.vision.frame import FrameAnalysis
 from app.vision.image_io import save_array
@@ -125,3 +126,29 @@ class ObserverStats:
     missing_window: int = 0
     errors: int = 0
     saved: int = 0
+
+
+# --- Relecture des observations enregistrées --------------------------------
+
+
+def sheet_from_record(record: ObservationRecord) -> VillageSheet | None:
+    """Fiche village depuis un enregistrement du mode observation (None si butin incomplet)."""
+    values = {name: c.value for name, c in record.loot.items()}
+    if len(values) != 3 or any(v is None for v in values.values()):
+        return None
+    confidence = min(c.confidence for c in record.loot.values())
+    return build_sheet(Loot(**values), confidence, record.captured_at, record.image)
+
+
+def load_observations(directory: Path) -> list[VillageSheet]:
+    sheets: list[VillageSheet] = []
+    for path in sorted(directory.glob("scout_*.json")):
+        try:
+            record = ObservationRecord.model_validate_json(path.read_text(encoding="utf-8"))
+        except (ValidationError, OSError) as exc:
+            logger.warning("Observation ignorée %s : %s", path.name, exc)
+            continue
+        sheet = sheet_from_record(record)
+        if sheet is not None:
+            sheets.append(sheet)
+    return sheets

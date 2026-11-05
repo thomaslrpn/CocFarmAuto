@@ -11,13 +11,17 @@ import logging
 import sys
 import time
 
-from app.analysis.profitability import compute_profitability
 from app.analysis.scoring import ScoringPreferences, load_preferences
 from app.analysis.village_analysis import sheet_from_frame
 from app.capture.screen import CaptureError, grab_window
 from app.capture.window import WindowNotSupportedError, find_window
 from app.config import Settings
+from app.database.database import Database
+from app.database.migrations import MigrationError
+from app.database.repository import refresh_daily_statistics, save_evaluation
 from app.observer import ObserverStats, ScoutRecorder
+from app.strategy.advisor import evaluate_village
+from app.strategy.strategies import strategy_label
 from app.vision.frame import VisionModels, analyze_frame
 from app.vision.image_io import TemplatesNotFoundError
 from app.vision.preprocess import to_bgr
@@ -35,6 +39,7 @@ def observe_once(
     recorder: ScoutRecorder,
     stats: ObserverStats,
     prefs: ScoringPreferences,
+    db: Database,
 ) -> None:
     """Un cycle : trouver la fenêtre, capturer, analyser, enregistrer si besoin."""
     window = find_window(settings.game_window_title)
@@ -45,14 +50,20 @@ def observe_once(
     bgr = to_bgr(image)
     analysis = analyze_frame(bgr, models)
     stats.frames += 1
-    if recorder.process(bgr, analysis) is not None:
+    json_path = recorder.process(bgr, analysis)
+    if json_path is not None:
         stats.saved += 1
         gold, elixir, dark = (r.value for r in analysis.loot)
-        sheet = sheet_from_frame(analysis)
+        sheet = sheet_from_frame(analysis, source_image=json_path.with_suffix(".png").name)
         verdict = ""
         if sheet is not None:
-            result = compute_profitability(sheet, prefs)
-            verdict = f"  -> {result.score}/100 {result.recommendation.value}"
+            evaluation = evaluate_village(sheet, prefs)
+            with db.session() as session:  # enregistrement en base + statistiques du jour
+                save_evaluation(session, evaluation, prefs)
+                refresh_daily_statistics(session, sheet.analyzed_at.date())
+            result = evaluation.result
+            verdict = (f"  -> {result.score}/100 {result.recommendation.value}"
+                       f" ({strategy_label(evaluation.strategy.key if evaluation.strategy else None)})")
         print(f"[{time.strftime('%H:%M:%S')}] Village n°{stats.saved} : "
               f"or {fmt(gold)} | élixir {fmt(elixir)} | noir {fmt(dark)}{verdict}")
 
@@ -74,6 +85,12 @@ def main() -> int:
         print(f"Erreur : {exc}", file=sys.stderr)
         return 1
 
+    try:
+        db = Database.open(settings.database_path, settings.backups_dir)
+    except MigrationError as exc:
+        print(f"Erreur : {exc}", file=sys.stderr)
+        return 1
+
     recorder = ScoutRecorder(settings.observations_dir)
     prefs = load_preferences(settings.data_dir)
     stats = ObserverStats()
@@ -86,7 +103,7 @@ def main() -> int:
         while args.duration is None or time.monotonic() - started < args.duration:
             cycle_start = time.monotonic()
             try:
-                observe_once(settings, models, recorder, stats, prefs)
+                observe_once(settings, models, recorder, stats, prefs, db)
             except WindowNotSupportedError as exc:
                 print(f"Erreur : {exc}", file=sys.stderr)
                 return 1
@@ -98,6 +115,8 @@ def main() -> int:
             time.sleep(max(0.0, args.interval - (time.monotonic() - cycle_start)))
     except KeyboardInterrupt:
         pass
+    finally:
+        db.close()
 
     elapsed = time.monotonic() - started
     print(f"\nArrêt après {elapsed:.0f} s : {stats.frames} analyse(s), {stats.saved} village(s) enregistré(s), "

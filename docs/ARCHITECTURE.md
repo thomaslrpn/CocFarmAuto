@@ -41,7 +41,7 @@ Données utilisateur : %LOCALAPPDATA%\CoCAutoFarm (SQLite, captures, logs)
 - La clé **privée** reste sur la machine de build / secret CI, jamais dans le dépôt (`.gitignore`). Seule la clé publique est embarquée.
 - Canaux : stable / beta / dev = différents `latest.json` (ex. tags `v1.1.0`, `v1.2.0-beta.1`).
 - Installateur : NSIS (généré par Tauri), raccourcis bureau + menu Démarrer + désinstalleur.
-- Migrations SQLite (Alembic) + sauvegarde automatique avant migration.
+- Migrations SQLite + sauvegarde automatique avant migration (voir §8).
 
 ## 5. Arborescence
 
@@ -58,3 +58,11 @@ Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–
 - **Chiffres et écrans** : template matching OpenCV (corrélation normalisée), modèles générés depuis `datasets/labels.json` par `app.build_templates` et livrés avec l'application.
 - **E/S d'images via Pillow** : `cv2.imread/imwrite` échouent silencieusement sur les chemins accentués sous Windows.
 - **Bâtiments (reporté)** : le butin est déjà lu directement, suffisant pour un premier score (phase 3). Les écrans de recherche sont collectés automatiquement par le mode observation ; la détection des bâtiments viendra ensuite avec **Ultralytics YOLO** (export ONNX, inférence `onnxruntime`). Sa licence AGPL-3.0 implique de publier le code source de CoC AutoFarm sous une licence compatible : accepté par le porteur du projet (2026-11-05).
+
+## 8. Base de données — décisions (phase 5)
+
+- SQLite + SQLAlchemy 2.0, fichier `%LOCALAPPDATA%\CoCAutoFarmutofarm.db` (mode WAL, clés étrangères actives).
+- **Migrations maison** (`database/migrations.py`) plutôt qu'Alembic : numéro de version dans `PRAGMA user_version`, scripts SQL appliqués dans l'ordre, chacun dans une transaction. Plus simple à comprendre et à embarquer avec PyInstaller. Une migration publiée n'est jamais modifiée.
+- Sauvegarde automatique avant toute migration d'une base existante (`backups/`, 5 dernières conservées). Une base plus récente que le logiciel est refusée (pas de retour arrière silencieux).
+- Un test vérifie que `models.py` correspond exactement au schéma produit par les migrations.
+- Le mode observation enregistre directement en base ; `db_cli import` importe les observations JSON existantes (sans doublon).

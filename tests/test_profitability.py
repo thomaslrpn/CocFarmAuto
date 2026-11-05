@@ -9,8 +9,7 @@ from pydantic import ValidationError
 from app.analysis.profitability import Recommendation, compute_profitability
 from app.analysis.scoring import PREFERENCES_FILE, Priority, ScoringPreferences, load_preferences
 from app.analysis.village_analysis import Loot, build_sheet, sheet_from_frame
-from app.analyze_cli import load_observations
-from app.observer import ScoutRecorder
+from app.observer import ScoutRecorder, load_observations
 from app.vision.frame import FrameAnalysis
 from app.vision.models import Box, ElementType
 from app.vision.resources import ResourceReading

@@ -10,38 +10,11 @@ import logging
 import sys
 from pathlib import Path
 
-from pydantic import ValidationError
-
 from app.analysis.profitability import ProfitabilityResult, compute_profitability
 from app.analysis.scoring import PREFERENCES_FILE, ScoringPreferences, load_preferences
-from app.analysis.village_analysis import Loot, VillageSheet, build_sheet
+from app.analysis.village_analysis import VillageSheet
 from app.config import Settings
-from app.observer import ObservationRecord
-
-logger = logging.getLogger("app.analyze")
-
-
-def sheet_from_record(record: ObservationRecord) -> VillageSheet | None:
-    """Fiche village depuis un enregistrement du mode observation (None si butin incomplet)."""
-    values = {name: c.value for name, c in record.loot.items()}
-    if len(values) != 3 or any(v is None for v in values.values()):
-        return None
-    confidence = min(c.confidence for c in record.loot.values())
-    return build_sheet(Loot(**values), confidence, record.captured_at, record.image)
-
-
-def load_observations(directory: Path) -> list[VillageSheet]:
-    sheets: list[VillageSheet] = []
-    for path in sorted(directory.glob("scout_*.json")):
-        try:
-            record = ObservationRecord.model_validate_json(path.read_text(encoding="utf-8"))
-        except (ValidationError, OSError) as exc:
-            logger.warning("Fichier ignoré %s : %s", path.name, exc)
-            continue
-        sheet = sheet_from_record(record)
-        if sheet is not None:
-            sheets.append(sheet)
-    return sheets
+from app.observer import load_observations
 
 
 def fmt(n: int) -> str:
