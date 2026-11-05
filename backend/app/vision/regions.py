@@ -43,5 +43,16 @@ HOME_RESOURCE_REGIONS: dict[ElementType, RelativeRegion] = {
     ElementType.DARK_ELIXIR: RelativeRegion(0.8466, 0.1384, 0.9637, 0.1761),
 }
 
-# TODO (étape 2.2) : zones du butin disponible sur l'écran de RECHERCHE D'ADVERSAIRE,
-# à mesurer sur des captures réelles (aucune valeur inventée ici).
+# « Butin disponible » sur l'écran de RECHERCHE D'ADVERSAIRE (en haut à gauche).
+# Mesuré sur 4 captures réelles 1323x744 ; la ligne « Butin disponible : » est exclue.
+LOOT_RESOURCE_REGIONS: dict[ElementType, RelativeRegion] = {
+    ElementType.GOLD: RelativeRegion(0.0393, 0.1022, 0.1323, 0.1358),
+    ElementType.ELIXIR: RelativeRegion(0.0393, 0.1452, 0.1323, 0.1788),
+    ElementType.DARK_ELIXIR: RelativeRegion(0.0393, 0.1895, 0.1323, 0.2231),
+}
+
+# Jeux de zones par nom (utilisés par les outils et le fichier d'annotations).
+REGION_SETS: dict[str, dict[ElementType, RelativeRegion]] = {
+    "home": HOME_RESOURCE_REGIONS,
+    "loot": LOOT_RESOURCE_REGIONS,
+}

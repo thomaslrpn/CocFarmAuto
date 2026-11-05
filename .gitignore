@@ -35,6 +35,7 @@ screenshots/*
 !screenshots/.gitkeep
 datasets/*
 !datasets/.gitkeep
+!datasets/labels.json
 
 # --- Release / packaging ---
 releases/*

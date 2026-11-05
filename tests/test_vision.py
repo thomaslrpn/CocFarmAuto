@@ -10,7 +10,7 @@ from pydantic import ValidationError
 from app.vision.models import Box, Detection, ElementType
 from app.vision.preprocess import segment_characters, to_bgr, white_text_mask
 from app.vision.regions import HOME_RESOURCE_REGIONS, RelativeRegion
-from app.vision.resources import locate_resource_counters
+from app.vision.resources import read_resource_counters
 
 # Captures réelles (dossier ignoré par Git : données personnelles).
 DATASETS_DIR = Path(__file__).resolve().parents[1] / "datasets"
@@ -78,6 +78,6 @@ REAL_HOME = DATASETS_DIR / "home_village_1323x744.png"
 @pytest.mark.skipif(not REAL_HOME.exists(), reason=f"capture réelle absente : {REAL_HOME}")
 def test_real_home_village_counters():
     """Capture réelle : or 23 371 657, élixir 22 440 000, élixir noir 324 143."""
-    readings = locate_resource_counters(to_bgr(Image.open(REAL_HOME)), HOME_RESOURCE_REGIONS)
+    readings = read_resource_counters(to_bgr(Image.open(REAL_HOME)), HOME_RESOURCE_REGIONS)
     counts = {r.resource: len(r.characters) for r in readings}
     assert counts == {ElementType.GOLD: 8, ElementType.ELIXIR: 8, ElementType.DARK_ELIXIR: 6}

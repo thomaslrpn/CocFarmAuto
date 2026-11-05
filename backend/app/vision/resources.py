@@ -1,8 +1,7 @@
-"""Localisation des compteurs de ressources (or, élixir, élixir noir).
+"""Lecture des compteurs de ressources (or, élixir, élixir noir).
 
-Étape 2.1 : on LOCALISE les chiffres de chaque compteur (position, nombre de
-caractères). La LECTURE des chiffres (template matching) arrive à l'étape 2.2 :
-d'ici là, `ResourceReading.value` reste à None — rien n'est simulé.
+Fonctionne pour toute zone définie dans `regions.py` : ressources du joueur
+(en haut à droite) ou butin disponible chez l'adversaire (en haut à gauche).
 """
 from __future__ import annotations
 
@@ -11,7 +10,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from app.vision.models import Box, ElementType
+from app.vision.digits import DigitTemplates
+from app.vision.models import Box, Detection, ElementType
 from app.vision.preprocess import crop, segment_characters, white_text_mask
 from app.vision.regions import RelativeRegion
 
@@ -20,12 +20,13 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class ResourceReading:
-    """Résultat pour un compteur : zone analysée et chiffres trouvés (coordonnées image)."""
+    """Résultat pour un compteur : zone analysée, chiffres trouvés, valeur lue."""
 
     resource: ElementType
     region: Box
-    characters: list[Box]
-    value: int | None = None  # rempli à l'étape 2.2
+    characters: list[Box]  # coordonnées dans l'image entière
+    value: int | None = None  # None si aucun modèle fourni ou rien trouvé
+    confidence: float = 0.0  # confiance du chiffre le MOINS sûr
 
     @property
     def text_box(self) -> Box | None:
@@ -38,17 +39,34 @@ class ResourceReading:
         y1 = max(b.bottom for b in self.characters)
         return Box(x0, y0, x1 - x0, y1 - y0)
 
+    def to_detection(self) -> Detection | None:
+        """Convertit en `Detection` (format commun du module vision)."""
+        box = self.text_box
+        if box is None or self.value is None:
+            return None
+        return Detection.from_box(self.resource, box, confidence=self.confidence, value=self.value)
 
-def locate_resource_counters(
-    bgr: np.ndarray, regions: dict[ElementType, RelativeRegion]
+
+def extract_characters(bgr: np.ndarray, region: Box) -> list[tuple[Box, np.ndarray]]:
+    """Découpe les caractères d'une zone. Retourne (boîte dans l'image, masque du caractère)."""
+    mask = white_text_mask(crop(bgr, region))
+    return [(b.offset(region.x, region.y), crop(mask, b)) for b in segment_characters(mask)]
+
+
+def read_resource_counters(
+    bgr: np.ndarray,
+    regions: dict[ElementType, RelativeRegion],
+    templates: DigitTemplates | None = None,
 ) -> list[ResourceReading]:
-    """Localise les chiffres de chaque compteur de ressource défini dans `regions`."""
+    """Localise (et lit, si `templates` est fourni) chaque compteur de `regions`."""
     height, width = bgr.shape[:2]
     readings: list[ResourceReading] = []
     for resource, relative in regions.items():
         region = relative.to_box(width, height)
-        mask = white_text_mask(crop(bgr, region))
-        chars = [b.offset(region.x, region.y) for b in segment_characters(mask)]
-        logger.debug("%s : %d caractère(s) dans %s", resource.value, len(chars), region)
-        readings.append(ResourceReading(resource, region, chars))
+        chars = extract_characters(bgr, region)
+        value, confidence = None, 0.0
+        if templates is not None:
+            value, confidence = templates.read_number([m for _, m in chars])
+        logger.debug("%s : %d caractère(s), valeur=%s (%.2f)", resource.value, len(chars), value, confidence)
+        readings.append(ResourceReading(resource, region, [b for b, _ in chars], value, confidence))
     return readings
