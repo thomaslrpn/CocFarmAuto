@@ -9,7 +9,7 @@ Principe :
 3. Le meilleur score donne le chiffre ; le score sert de niveau de confiance.
 
 Les modèles sont construits à partir de captures réelles annotées
-(voir `app.build_digit_templates`) et livrés avec l'application.
+(voir `app.build_templates`) et livrés avec l'application.
 """
 from __future__ import annotations
 
@@ -20,7 +20,9 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image
+
+from app.vision.image_io import TemplatesNotFoundError, load_array, save_array
+from app.vision.preprocess import similarity
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +30,6 @@ GLYPH_SIZE = 20  # côté du carré de normalisation, en pixels
 # En dessous, une lecture est jugée incertaine (sur captures réelles : 0.73 à 0.92).
 MIN_RELIABLE_CONFIDENCE = 0.6
 DEFAULT_TEMPLATES_DIR = Path(__file__).parent / "templates" / "digits"
-
-
-class TemplatesNotFoundError(FileNotFoundError):
-    """Les modèles de chiffres n'ont pas encore été générés."""
 
 
 def normalize_glyph(mask: np.ndarray, size: int = GLYPH_SIZE) -> np.ndarray:
@@ -50,14 +48,6 @@ def normalize_glyph(mask: np.ndarray, size: int = GLYPH_SIZE) -> np.ndarray:
     return canvas
 
 
-def _similarity(a: np.ndarray, b: np.ndarray) -> float:
-    """Corrélation normalisée entre deux images de même taille (0.0 à 1.0)."""
-    if a.std() == 0 or b.std() == 0:  # image uniforme : corrélation indéfinie
-        return 0.0
-    score = float(cv2.matchTemplate(a, b, cv2.TM_CCOEFF_NORMED)[0, 0])
-    return max(0.0, score)
-
-
 @dataclass(frozen=True)
 class DigitTemplates:
     """Les 10 modèles de chiffres, indexés de 0 à 9."""
@@ -67,7 +57,7 @@ class DigitTemplates:
     def classify(self, mask: np.ndarray) -> tuple[int, float]:
         """Retourne (chiffre le plus ressemblant, score de confiance)."""
         glyph = normalize_glyph(mask)
-        scores = {digit: _similarity(glyph, tpl) for digit, tpl in self.templates.items()}
+        scores = {digit: similarity(glyph, tpl) for digit, tpl in self.templates.items()}
         best = max(scores, key=scores.__getitem__)
         return best, scores[best]
 
@@ -92,13 +82,9 @@ class DigitTemplates:
             raise ValueError(f"Aucun exemple pour le(s) chiffre(s) : {missing}")
         return cls({d: np.mean(g, axis=0).astype(np.float32) for d, g in sorted(groups.items())})
 
-    # Fichiers lus/écrits avec Pillow et non cv2.imread/imwrite : sous Windows,
-    # OpenCV échoue SILENCIEUSEMENT sur les chemins accentués (ex. « Développement »).
-
     def save(self, directory: Path = DEFAULT_TEMPLATES_DIR) -> None:
-        directory.mkdir(parents=True, exist_ok=True)
         for digit, tpl in self.templates.items():
-            Image.fromarray(np.round(tpl * 255).astype(np.uint8), mode="L").save(directory / f"{digit}.png")
+            save_array(tpl, directory / f"{digit}.png")
 
     @classmethod
     def load(cls, directory: Path = DEFAULT_TEMPLATES_DIR) -> "DigitTemplates":
@@ -106,6 +92,6 @@ class DigitTemplates:
         for digit in range(10):
             path = directory / f"{digit}.png"
             if not path.is_file():
-                raise TemplatesNotFoundError(f"Modèle manquant : {path} (lancer app.build_digit_templates)")
-            templates[digit] = np.asarray(Image.open(path).convert("L"), np.float32) / 255.0
+                raise TemplatesNotFoundError(f"Modèle manquant : {path} (lancer app.build_templates)")
+            templates[digit] = load_array(path, grayscale=True)
         return cls(templates)

@@ -28,6 +28,11 @@ class RelativeRegion:
         if not (0.0 <= self.left < self.right <= 1.0 and 0.0 <= self.top < self.bottom <= 1.0):
             raise ValueError(f"Région relative invalide : {self}")
 
+    @classmethod
+    def from_pixels(cls, x0: int, y0: int, x1: int, y1: int, ref_width: int, ref_height: int) -> "RelativeRegion":
+        """Crée une région à partir de pixels mesurés sur une capture de référence."""
+        return cls(x0 / ref_width, y0 / ref_height, x1 / ref_width, y1 / ref_height)
+
     def to_box(self, image_width: int, image_height: int) -> Box:
         """Convertit en pixels pour une image de la taille donnée."""
         x0, y0 = round(self.left * image_width), round(self.top * image_height)

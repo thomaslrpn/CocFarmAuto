@@ -62,3 +62,15 @@ def segment_characters(
     median_h = float(np.median([b.height for b in candidates]))
     kept = [b for b in candidates if abs(b.height - median_h) <= median_h * height_tolerance]
     return sorted(kept, key=lambda b: b.x)
+
+
+def similarity(a: np.ndarray, b: np.ndarray) -> float:
+    """Ressemblance entre deux images de MÊME taille, de 0.0 (rien à voir) à 1.0 (identiques).
+
+    Corrélation normalisée (cv2.TM_CCOEFF_NORMED) : insensible à un écart global
+    de luminosité, ce qui tolère de petites variations d'affichage.
+    """
+    if a.std() == 0 or b.std() == 0:  # image uniforme : corrélation indéfinie
+        return 0.0
+    score = float(cv2.matchTemplate(a.astype(np.float32), b.astype(np.float32), cv2.TM_CCOEFF_NORMED)[0, 0])
+    return max(0.0, score)

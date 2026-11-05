@@ -17,3 +17,15 @@ cd ..; pytest                      # tests
 ```
 
 Les captures sont enregistrées dans `%LOCALAPPDATA%\CoCAutoFarm\screenshots`.
+
+## Phase 2 — Reconnaissance visuelle (outils de développement)
+
+```powershell
+cd backend
+python -m app.capture_cli            # capture (fonctionne même si la fenêtre est recouverte)
+python -m app.vision_debug           # écran reconnu + ressources lues sur la dernière capture
+python -m app.build_templates        # régénère les modèles après ajout de captures annotées
+```
+
+- Images annotées : `%LOCALAPPDATA%\CoCAutoFarm\debug`.
+- Captures d'entraînement : `datasets/*.png` (non versionnées) ; valeurs attendues : `datasets/labels.json` (versionné).

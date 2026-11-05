@@ -1,7 +1,8 @@
 """Captures réelles annotées (`datasets/labels.json`).
 
-Format : {"captures": {"<fichier>.png": {"<jeu de zones>": {"<ressource>": valeur}}}}
-où le jeu de zones est une clé de `REGION_SETS` ("home", "loot").
+Format : {"captures": {"<fichier>.png": {"screen": "<écran>", "<jeu de zones>": {"<ressource>": valeur}}}}
+où l'écran est une valeur de `GameScreen` (home, scout, battle) et le jeu de
+zones une clé de `REGION_SETS` ("home", "loot").
 """
 from __future__ import annotations
 
@@ -18,8 +19,11 @@ from app.vision.models import ElementType
 from app.vision.preprocess import to_bgr
 from app.vision.regions import REGION_SETS
 from app.vision.resources import extract_characters
+from app.vision.screen_state import GameScreen
 
 logger = logging.getLogger(__name__)
+
+SCREEN_KEY = "screen"
 
 
 @dataclass(frozen=True)
@@ -32,16 +36,34 @@ class LabeledCounter:
     expected: int
 
 
-def load_labels(labels_path: Path) -> list[LabeledCounter]:
-    """Lit le fichier d'annotations. Ignore (avec un avertissement) les images absentes."""
+def _available_captures(labels_path: Path) -> Iterator[tuple[Path, dict]]:
+    """(chemin, annotations) de chaque capture présente sur le disque."""
     data = json.loads(labels_path.read_text(encoding="utf-8"))
-    counters: list[LabeledCounter] = []
-    for filename, sets in data["captures"].items():
+    for filename, annotations in data["captures"].items():
         image_path = labels_path.parent / filename
         if not image_path.is_file():
             logger.warning("Capture annotée absente : %s", image_path)
             continue
-        for region_set, values in sets.items():
+        yield image_path, annotations
+
+
+def load_screen_labels(labels_path: Path) -> list[tuple[Path, GameScreen]]:
+    """(capture, écran attendu) pour chaque capture annotée avec la clé « screen »."""
+    return [
+        (path, GameScreen(annotations[SCREEN_KEY]))
+        for path, annotations in _available_captures(labels_path)
+        if SCREEN_KEY in annotations
+    ]
+
+
+def load_labels(labels_path: Path) -> list[LabeledCounter]:
+    """Compteurs de ressources annotés. Ignore (avec un avertissement) les images absentes."""
+    counters: list[LabeledCounter] = []
+    for image_path, annotations in _available_captures(labels_path):
+        filename = image_path.name
+        for region_set, values in annotations.items():
+            if region_set == SCREEN_KEY:
+                continue
             if region_set not in REGION_SETS:
                 raise ValueError(f"{filename} : jeu de zones inconnu '{region_set}'")
             for resource, expected in values.items():
