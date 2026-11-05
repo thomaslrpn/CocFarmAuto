@@ -1,191 +1,126 @@
-# CoC AutoFarm
+<p align="center">
+  <img src="desktop/branding/icon-1024.png" width="120" alt="">
+</p>
 
-Assistant d'analyse et d'optimisation du farm pour Clash of Clans (Windows, Google Play Games).
-Outil d'aide à la décision et de simulation uniquement.
+<h1 align="center">CoC AutoFarm</h1>
 
-Cahier des charges : [CLAUDE.md](CLAUDE.md) · Architecture : [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+<p align="center">
+  Repère les villages rentables pendant que tu farmes sur Clash of Clans.<br>
+  Pour Windows, avec Google Play Games.
+</p>
 
-## Phase 1 — Première capture (Windows, PowerShell)
+<p align="center">
+  <a href="https://github.com/thomaslrpn/CocFarmAuto/releases/latest"><b>⬇ Télécharger la dernière version</b></a>
+</p>
 
-```powershell
-cd backend
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python -m app.capture_cli          # capture la fenêtre du jeu (ou --full pour tout l'écran)
-cd ..; pytest                      # tests
-```
+---
 
-Les captures sont enregistrées dans `%LOCALAPPDATA%\CoCAutoFarm\screenshots`.
+## Ce que fait CoC AutoFarm
 
-## Phase 2 — Reconnaissance visuelle (outils de développement)
+Pendant que tu cherches des adversaires dans Clash of Clans, CoC AutoFarm regarde l'écran du jeu et,
+pour chaque village rencontré :
 
-```powershell
-cd backend
-python -m app.capture_cli            # capture (fonctionne même si la fenêtre est recouverte)
-python -m app.vision_debug           # écran reconnu + ressources lues sur la dernière capture
-python -m app.build_templates        # régénère les modèles après ajout de captures annotées
-python -m app.observe_cli            # mode observation : enregistre chaque village rencontré (Ctrl+C pour arrêter)
-```
+- lit le **butin disponible** (or, élixir, élixir noir) ;
+- calcule un **score de rentabilité sur 100**, expliqué ligne par ligne ;
+- te dit s'il est **très intéressant**, **intéressant**, **moyen** ou **à passer** ;
+- recommande une **stratégie** (farm or, élixir, élixir noir ou équilibré) ;
+- garde un **historique** et des **statistiques** de tous les villages vus.
 
-- Images annotées : `%LOCALAPPDATA%\CoCAutoFarm\debug`.
-- Villages observés : `%LOCALAPPDATA%\CoCAutoFarm\observations` (un PNG + un JSON par village).
-- Captures d'entraînement : `datasets/*.png` (non versionnées) ; valeurs attendues : `datasets/labels.json` (versionné).
+**CoC AutoFarm ne joue pas à ta place.** Il ne clique sur rien, n'envoie aucune action au jeu et ne
+contourne aucune protection : il observe et te conseille, c'est toi qui décides et qui attaques.
 
-## Phase 3 — Rentabilité
+## Configuration requise
 
-```powershell
-python -m app.analyze_cli            # classe les villages observés par score, détaille le meilleur
-python -m app.analyze_cli --explain 3
-```
+- Windows 10 ou 11 (64 bits).
+- [Google Play Games pour PC](https://play.google.com/googleplaygames) avec Clash of Clans installé.
+- Fenêtre du jeu d'au moins **960 × 540** pixels (plein écran ou fenêtre, format 16:9).
+- Environ 200 Mo d'espace disque. Internet sert uniquement aux mises à jour.
 
-Préférences (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\preferences.json`, par exemple :
+## Installation
 
-```json
-{
-  "priority": "balanced",
-  "target_loot": {"gold": 600000, "elixir": 600000, "dark_elixir": 10000},
-  "army_cost": {"gold": 0, "elixir": 0, "dark_elixir": 0},
-  "dark_elixir_importance": 1.0,
-  "min_gold_elixir": 0
-}
-```
-`priority` : `balanced`, `gold`, `elixir` ou `dark_elixir`.
+1. [Télécharge l'installateur](https://github.com/thomaslrpn/CocFarmAuto/releases/latest)
+   (fichier `CoC-AutoFarm_…_x64-setup.exe`).
+2. Lance-le et suis les étapes. Aucun droit administrateur n'est demandé.
+3. Si Windows affiche « Windows a protégé votre ordinateur », clique sur **Informations complémentaires**
+   puis **Exécuter quand même**. Cet avertissement apparaît parce que le logiciel est récent et n'a pas
+   de certificat payant ; le code source est public sur cette page.
 
-## Phase 4 — Stratégies (simulation théorique)
+CoC AutoFarm apparaît ensuite sur le bureau et dans le menu Démarrer.
 
-```powershell
-python -m app.simulate_cli           # compare les stratégies sur les villages observés
-```
+## Utilisation
 
-Hypothèses (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\simulation.json`, par exemple :
+1. Lance **Clash of Clans** dans Google Play Games.
+2. Lance **CoC AutoFarm**.
+3. Sur le **Dashboard**, clique sur **Démarrer l'observation**.
+4. Dans le jeu, cherche des adversaires comme d'habitude. Chaque village affiché est analysé
+   automatiquement en quelques secondes.
+5. Regarde la recommandation dans CoC AutoFarm, puis attaque ou passe au village suivant.
 
-```json
-{
-  "capture_rates": {"gold": 0.75, "elixir": 0.75, "dark_elixir": 0.75},
-  "attack_duration_s": 180,
-  "army_ready_delay_s": 0,
-  "search_cost_gold": 1500
-}
-```
+Les pages de l'application :
 
-## Phase 5 — Base de données
-
-```powershell
-python -m app.db_cli import           # importe les villages observés (sans doublon)
-python -m app.db_cli stats            # résumé et statistiques par jour
-python -m app.db_cli backup           # sauvegarde manuelle
-```
-
-Base : `%LOCALAPPDATA%\CoCAutoFarmutofarm.db` ; sauvegardes : `%LOCALAPPDATA%\CoCAutoFarmackups`.
-Le mode observation enregistre désormais chaque village directement en base.
-
-## Phase 5.2 — API locale
-
-```powershell
-python -m app.main                   # démarre l'API sur http://127.0.0.1:8765 (Ctrl+C pour arrêter)
-```
-
-- Documentation interactive : http://127.0.0.1:8765/docs → bouton **Authorize** → coller le jeton affiché au démarrage.
-- L'API n'écoute que ce PC et exige le jeton (en-tête `Authorization: Bearer <jeton>`, ou `?token=` pour les images).
-- Les réglages modifiés via `PUT /api/settings` sont enregistrés en base et utilisés par toutes les commandes.
-
-## Phase 5.3 — Observation pilotée par l'API, logs
-
-| URL | Rôle |
+| Page | Ce que tu y trouves |
 |---|---|
-| `POST /api/observer/start` | démarre l'observation en tâche de fond (`{"interval_s": 1.0}` optionnel) |
-| `POST /api/observer/stop` | l'arrête (le cycle en cours se termine) |
-| `GET /api/observer` | état : analyses, villages enregistrés, dernier village, erreurs |
-| `GET /api/logs` | derniers événements (`level`, `after_id` pour ne lire que les nouveaux) |
+| **Dashboard** | nombre de villages vus, butin repéré, score moyen, derniers villages |
+| **Analyse** | le dernier village : capture, butin lu, score détaillé, stratégie conseillée |
+| **Historique** | tous les villages, avec recherche, filtres et tri |
+| **Statistiques** | évolution du rendement, répartition des ressources, comparaison des stratégies |
+| **Paramètres** | ressource prioritaire, butin visé, coût de ton armée, fréquence d'analyse, mises à jour |
+| **Logs** | ce que fait le logiciel, en direct (utile en cas de problème) |
+| **À propos** | version, nouveautés, mises à jour |
 
-Journal complet (JSON, une ligne par événement) : `%LOCALAPPDATA%\CoCAutoFarm\logs\autofarm.log`.
-`python -m app.observe_cli` utilise le même moteur que l'API.
+### Bien régler le score
 
-## Phase 6 — Dashboard (React + TypeScript + Vite + Tailwind)
+Dans **Paramètres**, indique :
+- ta **ressource prioritaire** (or, élixir, élixir noir ou équilibré) ;
+- le **butin que tu vises** par attaque : un village qui l'atteint obtient la note maximale ;
+- le **coût de ton armée** : il est déduit du butin pour juger si l'attaque vaut le coup.
 
-Deux terminaux :
+Les nouveaux réglages s'appliquent aux villages analysés ensuite.
 
-```powershell
-# Terminal 1 : le moteur
-cd backend; .\.venv\Scripts\Activate.ps1; python -m app.main
+## Mises à jour
 
-# Terminal 2 : le dashboard (première fois : npm install)
-cd frontend; npm run dev
-```
+CoC AutoFarm vérifie tout seul s'il existe une nouvelle version (au démarrage, puis toutes les 6 heures).
+Quand c'est le cas, un encadré apparaît en bas du menu : va dans **À propos** et clique sur
+**Installer et redémarrer**. Tes données sont sauvegardées avant chaque mise à jour et ne sont jamais effacées.
 
-Ouvrir l'URL « Dashboard » affichée par le moteur (`http://localhost:5173/?token=...`) : le jeton est pris en compte automatiquement.
+Dans **Paramètres**, tu peux :
+- choisir le canal **Stable** (recommandé) ou **Bêta** pour essayer les nouveautés en avant-première ;
+- désactiver la recherche automatique (le bouton de la page À propos reste disponible).
 
-```powershell
-cd frontend
-npm test              # tests (Vitest)
-npm run typecheck     # vérification TypeScript
-npm run build         # version de production (frontend/dist)
-```
+Pour quitter la bêta, repasse sur **Stable** et clique sur **Revenir à la version stable** dans À propos.
 
-## Phase 7 — Application de bureau (Tauri 2)
+## Tes données
 
-Prérequis (une fois) : Rust (`rustup`, chaîne `stable-msvc`) et Visual Studio Build Tools 2022 (C++).
+Tout reste sur ton PC, dans `%LOCALAPPDATA%\CoCAutoFarm` (copie ce chemin dans l'Explorateur Windows) :
+historique des villages, captures, réglages, sauvegardes et journaux. Rien n'est envoyé sur internet.
+Chaque utilisateur de l'ordinateur a ses propres données.
 
-```powershell
-cd desktop
-npm install
-npm run dev        # fenêtre de développement (lance aussi le serveur Vite du frontend)
-npm run build      # version de production (desktop/src-tauri/target/release)
-```
+## Désinstaller
 
-L'application démarre elle-même le moteur (port libre, jeton aléatoire) et l'arrête à la fermeture :
-plus besoin de terminal ni de jeton. En développement (`npm run dev`), elle utilise le Python de `backend/.venv`.
+**Paramètres Windows → Applications → Applications installées → CoC AutoFarm → Désinstaller.**
+Ton historique est conservé dans `%LOCALAPPDATA%\CoCAutoFarm` ; supprime ce dossier si tu veux tout effacer.
 
-`npm run build` enchaîne : moteur (PyInstaller, `pip install -r backend/requirements-build.txt` requis),
-dashboard, application optimisée, puis installateur `src-tauri/target/release/bundle/nsis/*-setup.exe`.
+## Problèmes fréquents
 
-Comportement de l'application installée :
-- une seule instance : la relancer remet la fenêtre ouverte au premier plan ;
-- taille et position de la fenêtre conservées d'un lancement à l'autre ;
-- installateur en français, installé pour l'utilisateur courant (sans droits administrateur).
+**« Fenêtre du jeu introuvable »**
+Clash of Clans doit être lancé dans Google Play Games et la fenêtre ne doit pas être réduite.
 
-## Phase 8 — Mises à jour automatiques
+**Les montants lus sont faux ou absents**
+Agrandis la fenêtre du jeu (au moins 960 × 540, plein écran conseillé). La page **Logs** signale une
+fenêtre trop petite.
 
-Les mises à jour sont signées : l'application n'installe qu'un fichier signé avec la clé privée
-du projet (vérification par la clé publique incluse dans `tauri.conf.json`).
+**« Le moteur d'analyse n'a pas pu démarrer »**
+Ferme puis relance CoC AutoFarm. Si le problème continue, le détail est dans
+`%LOCALAPPDATA%\CoCAutoFarm\logs\autofarm.log`.
 
-- Clé privée + mot de passe : `%USERPROFILE%\.coc-autofarm\updater.key` et `updater.password`.
-  **Hors du dépôt. À sauvegarder** (clé USB, gestionnaire de mots de passe) : sans eux, les
-  installations existantes ne pourront plus être mises à jour.
-- Compilation signée (installateur + `.sig`) :
+## Limites actuelles
 
-```powershell
-cd desktop
-.\scripts\build-release.ps1
-```
+- Seul le butin est analysé : la défense du village (hôtel de ville, défenses, réserves) n'est pas encore
+  reconnue. C'est prévu dans une prochaine version.
+- Testé avec une fenêtre au format 16:9.
 
-Dans l'application : page **À propos** → « Rechercher des mises à jour ». Vérification automatique
-15 s après le démarrage puis toutes les 6 h ; un encadré apparaît dans le menu quand une version est
-disponible. Avant l'installation : sauvegarde de la base (`backups/…_avant-maj-<version>.db`) et arrêt du moteur.
+## Licence
 
-### Publier une nouvelle version
-
-Prérequis (une fois) : GitHub CLI — `winget install GitHub.cli`, puis `gh auth login`.
-
-1. Pendant le développement, noter les changements dans `CHANGELOG.md` sous une section
-   `## 0.1.1 — en développement` (elle devient les notes de version).
-2. Tout commiter, puis depuis `desktop\` :
-
-```powershell
-.\scripts\release.ps1 -Version 0.1.1 -DryRun      # essai complet, rien n'est publié
-.\scripts\release.ps1 -Version 0.1.1              # publication stable
-.\scripts\release.ps1 -Version 0.2.0-beta.1 -Prerelease   # bêta (invisible pour le canal stable)
-```
-
-Le script vérifie le dépôt, écrit la version partout (un test vérifie qu'elles sont identiques),
-date le changelog, lance tous les tests, compile et signe, prépare `releases\v<version>\`
-(installateur, `latest.json`, notes), commite « Version x.y.z », pose le tag `vx.y.z`, pousse
-et crée la release GitHub. Les applications installées la proposent à leur prochaine vérification.
-
-Canaux : dans **Paramètres → Application**, « Stable » (par défaut) ou « Bêta ». Le canal bêta reçoit
-les versions publiées avec `-Prerelease` en plus des stables ; la recherche automatique peut y être désactivée.
-L'historique des versions publiées est visible dans **À propos**.
-Pour quitter la bêta : repasser le canal sur « Stable » ; la dernière version stable est alors proposée
-(« Revenir à la version stable »), sauf si la bêta a fait évoluer la base de données — dans ce cas la
-prochaine version stable sera proposée automatiquement.
+Logiciel libre sous licence [GNU AGPL v3](LICENSE). Pour contribuer ou compiler le projet :
+[guide de développement](docs/DEVELOPPEMENT.md). Clash of Clans est une marque de Supercell ;
+CoC AutoFarm est un projet indépendant, ni affilié ni approuvé par Supercell.

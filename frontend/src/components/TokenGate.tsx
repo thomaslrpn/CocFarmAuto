@@ -1,8 +1,9 @@
-import { AlertTriangle, KeyRound, Loader2, PlugZap, Swords } from "lucide-react";
+import { AlertTriangle, KeyRound, Loader2, PlugZap } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ApiError, api, getApiUrl } from "../services/api";
 import { captureTokenFromUrl, clearToken, getToken, setToken } from "../services/auth";
 import { connectDesktopBackend, isDesktopApp } from "../services/desktop";
+import { AppLogo } from "./AppLogo";
 
 type GateState = "checking" | "ok" | "need-token" | "unreachable" | "desktop-error";
 
@@ -102,7 +103,7 @@ export function TokenGate({ children }: { children: ReactNode }) {
 function Splash() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <Swords aria-hidden className="size-14 text-accent" />
+      <AppLogo className="size-20" />
       <div className="text-2xl font-semibold">CoC AutoFarm</div>
       <div className="flex items-center gap-2 text-sm text-ink-secondary">
         <Loader2 aria-hidden className="size-4 animate-spin" /> Démarrage du moteur d'analyse…

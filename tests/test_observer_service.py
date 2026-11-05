@@ -219,3 +219,13 @@ def test_api_start_uses_frequency_setting(client):
     started = client.post("/api/observer/start", headers=AUTH).json()
     assert started["interval_s"] == 0.7
     client.post("/api/observer/stop", headers=AUTH)
+
+
+def test_warns_once_when_game_window_is_too_small(settings, db, caplog):
+    service = make_service(settings, db)
+    with caplog.at_level(logging.WARNING, logger="app.observer_service"):
+        for _ in range(3):
+            service._check_window_size(np.zeros((450, 800, 3), np.uint8))
+        service._check_window_size(np.zeros((744, 1323, 3), np.uint8))  # taille correcte : rien
+    warnings = [r for r in caplog.records if "trop petite" in r.getMessage()]
+    assert len(warnings) == 1 and "800x450" in warnings[0].getMessage()

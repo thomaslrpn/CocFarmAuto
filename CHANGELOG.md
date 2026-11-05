@@ -3,10 +3,20 @@
 Toutes les évolutions notables de CoC AutoFarm. Format inspiré de « Keep a Changelog »,
 versions selon Semantic Versioning (1.0.0 = première version stable).
 
-## 0.2.1 — en développement
+## 0.3.0 — en développement
+
+### Reconnaissance
+- Lecture fiable pour toutes les tailles de fenêtre du jeu de 960 x 540 à 2560 x 1440 (16:9).
+- Avertissement dans les Logs si la fenêtre du jeu est trop petite pour une lecture fiable.
 
 ### Interface
+- Nouvelle icône et nouveau logo ; installateur personnalisé (images, contrat de licence).
 - Menu latéral fixe : il reste visible (avec l'encadré de mise à jour) pendant le défilement des pages.
+- Plus de flash blanc à l'ouverture de la fenêtre.
+
+### Projet
+- Licence GNU AGPL v3, affichée dans À propos et dans l'installateur.
+- Nouveau guide d'utilisation (README) ; la documentation technique est dans docs/DEVELOPPEMENT.md.
 
 ## 0.2.1-beta.2 — 2026-11-05
 

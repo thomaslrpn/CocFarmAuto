@@ -40,6 +40,13 @@ class RelativeRegion:
         return Box(x0, y0, max(1, x1 - x0), max(1, y1 - y0))
 
 
+# Hauteur de fenêtre des captures de référence (1323x744) : toutes les mesures en
+# pixels du module vision (seuils de découpe, modèles) correspondent à cette taille.
+REFERENCE_HEIGHT = 744
+# En dessous, les chiffres font moins de 10 pixels : lecture non garantie
+# (mesuré : lecture exacte de 960x540 à 2560x1440, voir tests/test_resolutions.py).
+MIN_SUPPORTED_HEIGHT = 540
+
 # Compteurs de ressources du VILLAGE DU JOUEUR (en haut à droite).
 # Mesurés sur une capture réelle 1323x744 (16:9) : texte haut d'environ 13 px.
 HOME_RESOURCE_REGIONS: dict[ElementType, RelativeRegion] = {

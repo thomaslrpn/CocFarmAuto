@@ -29,6 +29,7 @@ from app.strategy.strategies import strategy_label
 from app.user_settings import load_user_settings
 from app.vision.frame import FrameAnalysis
 from app.vision.preprocess import to_bgr
+from app.vision.regions import MIN_SUPPORTED_HEIGHT
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +114,7 @@ class ObserverService:
         self._db = db
         self._frames = frame_source
         self._analyze = analyzer
+        self._small_window: tuple[int, int] | None = None  # taille déjà signalée comme trop petite
         self._on_village = on_village
         self._lock = threading.Lock()  # protège _status et _thread
         self._stop = threading.Event()
@@ -190,6 +192,7 @@ class ObserverService:
         if bgr is None:
             self._update(missing_window=self.status().missing_window + 1)
             return False
+        self._check_window_size(bgr)
         analysis = self._analyze(bgr)
         screen = analysis.screen.screen.value
         if self._screen_tracker.confirmed_change(screen):  # changements confirmés, pas chaque image
@@ -224,3 +227,14 @@ class ObserverService:
                            "duration_ms": round((time.perf_counter() - started) * 1000, 1)})
         if self._on_village is not None:
             self._on_village(observed)
+
+    def _check_window_size(self, bgr: np.ndarray) -> None:
+        """Avertit (une fois par taille) si la fenêtre du jeu est trop petite pour une lecture fiable."""
+        height, width = bgr.shape[:2]
+        if height >= MIN_SUPPORTED_HEIGHT or self._small_window == (width, height):
+            return
+        self._small_window = (width, height)
+        logger.warning(
+            "Fenêtre du jeu trop petite (%dx%d) : agrandis-la (minimum %d pixels de haut) pour une lecture fiable",
+            width, height, MIN_SUPPORTED_HEIGHT, extra={"width": width, "height": height},
+        )

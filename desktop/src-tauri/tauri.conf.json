@@ -18,7 +18,8 @@
         "height": 900,
         "minWidth": 1100,
         "minHeight": 700,
-        "center": true
+        "center": true,
+        "backgroundColor": "#0d0d0d"
       }
     ],
     "security": {
@@ -29,6 +30,8 @@
     "active": true,
     "targets": ["nsis"],
     "publisher": "thomaslrpn",
+    "license": "AGPL-3.0-only",
+    "licenseFile": "../../LICENSE",
     "copyright": "© 2026 thomaslrpn",
     "category": "Utility",
     "shortDescription": "Assistant d'analyse du farm sur Clash of Clans",
@@ -37,7 +40,11 @@
       "nsis": {
         "languages": ["French"],
         "displayLanguageSelector": false,
-        "installMode": "currentUser"
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "headerImage": "../branding/installer-header.bmp",
+        "sidebarImage": "../branding/installer-sidebar.bmp"
       }
     },
     "icon": [

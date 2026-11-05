@@ -7,11 +7,11 @@ import {
   ScanSearch,
   Settings,
   Sparkles,
-  Swords,
   type LucideIcon,
 } from "lucide-react";
 import { Link, NavLink, Outlet } from "react-router";
 import { useUpdater } from "../hooks/useUpdater";
+import { AppLogo } from "./AppLogo";
 import { compareVersions } from "../services/versions";
 
 interface NavItem {
@@ -37,7 +37,7 @@ export function Layout() {
       {/* Menu fixe : collé en haut, hauteur de la fenêtre ; seul le contenu de droite défile. */}
       <nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-line bg-surface px-3 py-5">
         <div className="mb-6 flex items-center gap-2 px-2">
-          <Swords aria-hidden className="size-6 text-accent" />
+          <AppLogo className="size-7" />
           <span className="text-lg font-semibold">CoC AutoFarm</span>
         </div>
         <ul className="flex flex-col gap-1">

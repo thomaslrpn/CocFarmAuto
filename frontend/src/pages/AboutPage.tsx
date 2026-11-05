@@ -1,6 +1,7 @@
-import { FolderOpen, ShieldCheck, Swords } from "lucide-react";
+import { FolderOpen, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 import changelog from "../../../CHANGELOG.md?raw";
+import { AppLogo } from "../components/AppLogo";
 import { Card } from "../components/Card";
 import { Changelog } from "../components/Changelog";
 import { ReleaseHistory } from "../components/ReleaseHistory";
@@ -19,7 +20,7 @@ export function AboutPage() {
       <div className="grid gap-6 xl:grid-cols-2">
         <Card>
           <div className="flex items-center gap-3">
-            <Swords aria-hidden className="size-10 text-accent" />
+            <AppLogo className="size-12" />
             <div>
               <div className="text-xl font-semibold">CoC AutoFarm</div>
               <div className="text-sm text-ink-secondary">Version {s?.version ?? "…"}</div>
@@ -37,7 +38,8 @@ export function AboutPage() {
             <Row label="Données (base, captures, logs)">{s?.data_dir ?? "…"}</Row>
             <Row label="Base de données">{s?.database ?? "…"}</Row>
             <Row label="Villages enregistrés">{s?.villages_count ?? "…"}</Row>
-            <Row label="Licence">non définie pour l'instant</Row>
+            <Row label="Licence">GNU AGPL v3 (logiciel libre)</Row>
+            <Row label="Code source">github.com/thomaslrpn/CocFarmAuto</Row>
           </dl>
           <p className="mt-3 flex items-center gap-2 text-xs text-ink-muted">
             <FolderOpen aria-hidden className="size-3.5" />
