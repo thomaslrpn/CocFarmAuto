@@ -17,7 +17,7 @@ const BUTTON = "inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm di
 /** Carte « Mises à jour » de la page À propos. */
 export function UpdateCard() {
   const updater = useUpdater();
-  const { status, lastCheck } = updater;
+  const { status, lastCheck, channel } = updater;
 
   if (status === "unsupported") {
     return (
@@ -44,7 +44,7 @@ export function UpdateCard() {
       <UpdateStatus updater={updater} />
       {lastCheck && (
         <p className="mt-3 text-xs text-ink-muted">
-          Dernière vérification : {lastCheck.toLocaleString("fr-FR")} · vérification automatique toutes les 6 h.
+          Dernière vérification : {lastCheck.toLocaleString("fr-FR")} · canal {channel === "beta" ? "bêta" : "stable"} (modifiable dans Paramètres).
         </p>
       )}
     </Card>

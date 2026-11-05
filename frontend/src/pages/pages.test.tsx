@@ -76,7 +76,7 @@ describe("page Paramètres", () => {
       capture_rates: { gold: 0.75, elixir: 0.75, dark_elixir: 0.75 },
       attack_duration_s: 180, army_ready_delay_s: 0, search_cost_gold: 1500, search_time_s: null,
     },
-    app: { observe_interval_s: 1 },
+    app: { observe_interval_s: 1, update_channel: "stable", auto_check_updates: true },
   };
 
   it("enregistre les modifications et met en évidence un champ refusé", async () => {
@@ -102,6 +102,7 @@ describe("page Paramètres", () => {
     await waitFor(() => expect(frequency).toHaveAttribute("aria-invalid", "true"));
     const body = JSON.parse(String((fetch.mock.calls.at(-1)![1] as RequestInit).body)) as UserSettings;
     expect(body.app.observe_interval_s).toBe(0.1);
+    expect(body.app.auto_check_updates).toBe(true); // les autres réglages de l'application sont conservés
   });
 });
 

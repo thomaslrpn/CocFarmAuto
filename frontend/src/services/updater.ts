@@ -13,10 +13,14 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { relaunch } from "@tauri-apps/plugin-process";
-import { check, type DownloadEvent, type Update } from "@tauri-apps/plugin-updater";
+import { Update, type DownloadEvent } from "@tauri-apps/plugin-updater";
+import type { UpdateChannel } from "../types/api";
 import { api } from "./api";
 
 export type { Update };
+
+/** Métadonnées renvoyées par la commande Rust `check_update` (même forme que le plugin). */
+type UpdateMetadata = ConstructorParameters<typeof Update>[0];
 
 export interface DownloadProgress {
   downloaded: number;
@@ -25,9 +29,15 @@ export interface DownloadProgress {
 
 export type InstallStep = "download" | "backup" | "stop-engine" | "install";
 
-/** Cherche une version plus récente. `null` = l'application est à jour. */
-export async function checkForUpdate(): Promise<Update | null> {
-  return check({ timeout: 30_000 });
+/**
+ * Cherche une version plus récente sur le canal choisi. `null` = l'application est à jour.
+ * La vérification est faite côté Rust (src-tauri/src/updates.rs), qui choisit le
+ * `latest.json` du canal ; la suite (téléchargement, signature, installation) reste
+ * celle du plugin.
+ */
+export async function checkForUpdate(channel: UpdateChannel): Promise<Update | null> {
+  const metadata = await invoke<UpdateMetadata | null>("check_update", { channel });
+  return metadata ? new Update(metadata) : null;
 }
 
 /**

@@ -215,7 +215,8 @@ def test_village_thumbnail(client, ctx):
 
 
 def test_app_preferences_setting(client):
-    assert client.get("/api/settings", headers=AUTH).json()["app"] == {"observe_interval_s": 1.0}
+    assert client.get("/api/settings", headers=AUTH).json()["app"] == {
+        "observe_interval_s": 1.0, "update_channel": "stable", "auto_check_updates": True}
     updated = put_settings(client, {"app": {"observe_interval_s": 0.5}}).json()
     assert updated["app"]["observe_interval_s"] == 0.5
     assert put_settings(client, {"app": {"observe_interval_s": 0.01}}).status_code == 422
@@ -247,3 +248,9 @@ def test_database_backup(client, ctx):
     with sqlite3.connect(path) as copy:
         assert copy.execute("SELECT COUNT(*) FROM villages").fetchone()[0] == 1
     assert client.post("/api/database/backup?label=../evil", headers=AUTH).status_code == 422
+
+
+def test_update_settings(client):
+    updated = put_settings(client, {"app": {"update_channel": "beta", "auto_check_updates": False}}).json()["app"]
+    assert updated == {"observe_interval_s": 1.0, "update_channel": "beta", "auto_check_updates": False}
+    assert put_settings(client, {"app": {"update_channel": "nightly"}}).status_code == 422

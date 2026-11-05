@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
@@ -35,6 +35,9 @@ class AppPreferences(BaseModel):
 
     observe_interval_s: float = Field(default=1.0, ge=0.2, le=60,
                                       description="secondes entre deux analyses en mode observation")
+    update_channel: Literal["stable", "beta"] = Field(
+        default="stable", description="stable : versions finalisées ; beta : reçoit aussi les versions de test")
+    auto_check_updates: bool = Field(default=True, description="vérifier les mises à jour au démarrage puis toutes les 6 h")
 
 
 @dataclass(frozen=True)

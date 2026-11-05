@@ -1,11 +1,13 @@
 /**
  * État des mises à jour, partagé par toute l'application (menu + page À propos).
  *
- * Vérification automatique : peu après le démarrage puis toutes les 6 heures.
+ * Vérification automatique (si activée dans Paramètres) : peu après le démarrage puis
+ * toutes les 6 heures, sur le canal choisi (stable ou bêta).
  * Une vérification automatique qui échoue reste discrète (pas d'alerte) ;
  * une vérification manuelle affiche le message d'erreur.
  */
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { api } from "../services/api";
 import { isDesktopApp } from "../services/desktop";
 import {
   checkForUpdate,
@@ -16,6 +18,7 @@ import {
   type InstallStep,
   type Update,
 } from "../services/updater";
+import type { UpdateChannel } from "../types/api";
 
 const FIRST_CHECK_DELAY_MS = 15_000;
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
@@ -39,6 +42,8 @@ export interface UpdaterState {
   step?: InstallStep;
   progress?: DownloadProgress;
   lastCheck?: Date;
+  /** Canal utilisé à la dernière vérification (réglage dans Paramètres). */
+  channel: UpdateChannel;
   check: () => Promise<void>;
   install: () => Promise<void>;
   restart: () => Promise<void>;
@@ -55,14 +60,19 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState<DownloadProgress>();
   const [lastCheck, setLastCheck] = useState<Date>();
   const [needsRestart, setNeedsRestart] = useState(false);
+  const [channel, setChannel] = useState<UpdateChannel>("stable");
   const busy = useRef(false); // évite deux vérifications / installations simultanées
 
   const runCheck = useCallback(async (manual: boolean) => {
     if (!supported || busy.current) return;
     busy.current = true;
-    if (manual) setStatus("checking");
     try {
-      const found = await checkForUpdate();
+      // Réglages relus à chaque fois : un changement de canal s'applique sans redémarrer.
+      const { app } = await api.settings();
+      setChannel(app.update_channel);
+      if (!manual && !app.auto_check_updates) return; // vérification automatique désactivée
+      if (manual) setStatus("checking");
+      const found = await checkForUpdate(app.update_channel);
       setUpdate(found ?? undefined);
       setError(undefined);
       setStatus(found ? "available" : "up-to-date");
@@ -71,9 +81,9 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
       // Échec silencieux en automatique, sauf si une mise à jour était déjà connue.
       setStatus((current) => (manual ? "error" : current === "checking" ? "idle" : current));
     } finally {
-      setLastCheck(new Date());
       busy.current = false;
     }
+    setLastCheck(new Date());
   }, [supported]);
 
   useEffect(() => {
@@ -105,11 +115,11 @@ export function UpdaterProvider({ children }: { children: ReactNode }) {
   }, [update]);
 
   const value = useMemo<UpdaterState>(() => ({
-    status, update, error, needsRestart, step, progress, lastCheck,
+    status, update, error, needsRestart, step, progress, lastCheck, channel,
     check: () => runCheck(true),
     install,
     restart: restartApp,
-  }), [status, update, error, needsRestart, step, progress, lastCheck, runCheck, install]);
+  }), [status, update, error, needsRestart, step, progress, lastCheck, channel, runCheck, install]);
 
   return <UpdaterContext.Provider value={value}>{children}</UpdaterContext.Provider>;
 }

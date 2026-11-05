@@ -148,8 +148,12 @@ export interface SimulationAssumptions {
   search_time_s: number | null;
 }
 
+export type UpdateChannel = "stable" | "beta";
+
 export interface AppPreferences {
   observe_interval_s: number;
+  update_channel: UpdateChannel;
+  auto_check_updates: boolean;
 }
 
 export interface UserSettings {

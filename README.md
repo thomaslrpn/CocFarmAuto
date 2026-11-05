@@ -182,3 +182,7 @@ Le script vérifie le dépôt, écrit la version partout (un test vérifie qu'el
 date le changelog, lance tous les tests, compile et signe, prépare `releases\v<version>\`
 (installateur, `latest.json`, notes), commite « Version x.y.z », pose le tag `vx.y.z`, pousse
 et crée la release GitHub. Les applications installées la proposent à leur prochaine vérification.
+
+Canaux : dans **Paramètres → Application**, « Stable » (par défaut) ou « Bêta ». Le canal bêta reçoit
+les versions publiées avec `-Prerelease` en plus des stables ; la recherche automatique peut y être désactivée.
+L'historique des versions publiées est visible dans **À propos**.

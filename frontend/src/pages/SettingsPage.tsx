@@ -4,7 +4,7 @@ import { Card } from "../components/Card";
 import { NumberField } from "../components/NumberField";
 import { PRIORITY_LABELS } from "../constants/strategies";
 import { ApiError, api } from "../services/api";
-import type { Loot, Priority, UserSettings, ValidationIssue } from "../types/api";
+import type { Loot, Priority, UpdateChannel, UserSettings, ValidationIssue } from "../types/api";
 
 type Feedback = { kind: "ok"; message: string } | { kind: "error"; message: string; issues: ValidationIssue[] };
 
@@ -45,6 +45,8 @@ export function SettingsPage() {
     setDraft({ ...draft, preferences: { ...draft.preferences, ...patch } });
   const setSim = (patch: Partial<UserSettings["simulation"]>) =>
     setDraft({ ...draft, simulation: { ...draft.simulation, ...patch } });
+  const setApp = (patch: Partial<UserSettings["app"]>) =>
+    setDraft({ ...draft, app: { ...draft.app, ...patch } });
 
   const save = async () => {
     setSaving(true);
@@ -152,7 +154,30 @@ export function SettingsPage() {
           <NumberField label="Fréquence des analyses" value={draft.app.observe_interval_s} min={0.2} max={60} step={0.1} suffix="s"
             help="Délai entre deux analyses en mode observation (appliqué au prochain démarrage)"
             invalid={isInvalid("app.observe_interval_s")}
-            onChange={(v) => setDraft({ ...draft, app: { observe_interval_s: v ?? 0 } })} />
+            onChange={(v) => setApp({ observe_interval_s: v ?? 0 })} />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="update-channel" className="text-xs text-ink-muted">Canal des mises à jour</label>
+            <select id="update-channel" value={draft.app.update_channel}
+              onChange={(e) => setApp({ update_channel: e.target.value as UpdateChannel })}
+              className="rounded-lg border border-line bg-page px-2.5 py-1.5 text-sm outline-none focus:border-accent">
+              <option value="stable">Stable (recommandé)</option>
+              <option value="beta">Bêta (versions de test)</option>
+            </select>
+            <span className="text-xs text-ink-muted">
+              {draft.app.update_channel === "beta"
+                ? "Reçoit les nouveautés en avant-première ; elles peuvent contenir des bugs."
+                : "Uniquement les versions finalisées."}
+            </span>
+          </div>
+          <label className="flex items-start gap-2 self-center text-sm">
+            <input type="checkbox" checked={draft.app.auto_check_updates}
+              onChange={(e) => setApp({ auto_check_updates: e.target.checked })}
+              className="mt-0.5 size-4 accent-[var(--color-accent)]" />
+            <span>
+              Rechercher les mises à jour automatiquement
+              <span className="block text-xs text-ink-muted">Au démarrage puis toutes les 6 h. Sinon : bouton dans À propos.</span>
+            </span>
+          </label>
         </Grid>
         <dl className="mt-5 grid gap-x-6 gap-y-2 border-t border-line pt-4 text-sm sm:grid-cols-3">
           <Info label="Résolution de capture">automatique (taille de la fenêtre du jeu)</Info>

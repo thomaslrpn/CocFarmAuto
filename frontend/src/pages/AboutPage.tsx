@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import changelog from "../../../CHANGELOG.md?raw";
 import { Card } from "../components/Card";
 import { Changelog } from "../components/Changelog";
+import { ReleaseHistory } from "../components/ReleaseHistory";
 import { UpdateCard } from "../components/UpdateCard";
 import { usePolling } from "../hooks/usePolling";
 import { api } from "../services/api";
@@ -47,9 +48,12 @@ export function AboutPage() {
         <UpdateCard />
       </div>
 
-      <Card title="Changelog">
-        <Changelog markdown={changelog} />
-      </Card>
+      <div className="grid items-start gap-6 xl:grid-cols-2">
+        <ReleaseHistory installedVersion={s?.version} />
+        <Card title="Changelog (version installée)">
+          <Changelog markdown={changelog} />
+        </Card>
+      </div>
     </div>
   );
 }

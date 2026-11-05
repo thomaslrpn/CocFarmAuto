@@ -11,14 +11,18 @@
     4. Compilation signée (build-release.ps1).
     5. Préparation dans releases\v<version>\ : installateur, latest.json, notes de version.
     6. Commit « Version x.y.z », tag vx.y.z, push, puis création de la release GitHub.
+    7. Mise à jour du canal bêta (release technique « updater-beta »).
 
-  Les applications installées lisent .../releases/latest/download/latest.json :
-  dès que la release est publiée, elles proposent la mise à jour.
-  Une « pre-release » (-Prerelease) n'est PAS vue par le canal stable.
+  Canaux (choisis dans les Paramètres de l'application) :
+    - stable : .../releases/latest/download/latest.json. GitHub ignore les pre-releases,
+      donc une version publiée avec -Prerelease n'est PAS vue par le canal stable ;
+    - bêta   : .../releases/download/updater-beta/latest.json, remplacé à chaque
+      publication (stable ou bêta) sauf si le canal bêta a déjà une version plus récente.
 
 .EXAMPLE
-  .\scripts\release.ps1 -Version 0.1.1            # publication stable
-  .\scripts\release.ps1 -Version 0.2.0 -DryRun    # essai complet, rien n'est publié
+  .\scripts\release.ps1 -Version 0.1.1                      # publication stable
+  .\scripts\release.ps1 -Version 0.2.0-beta.1 -Prerelease   # bêta
+  .\scripts\release.ps1 -Version 0.2.0 -DryRun              # essai complet, rien n'est publié
 #>
 param(
     [Parameter(Mandatory)] [string] $Version,
@@ -31,6 +35,8 @@ $ErrorActionPreference = "Stop"
 $Repo = "thomaslrpn/CocFarmAuto"
 $Root = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $Tag = "v$Version"
+$BetaTag = "updater-beta" # release technique qui porte le latest.json du canal bêta
+$BetaLatestUrl = "https://github.com/$Repo/releases/download/$BetaTag/latest.json"
 $Utf8 = [Text.UTF8Encoding]::new($false) # UTF-8 sans BOM
 
 # Fichiers contenant le numéro de version : chemin -> motif (le 1er groupe est conservé).
@@ -82,6 +88,30 @@ function Set-ProjectVersion([string] $newVersion) {
     # « ## 0.1.1 — en développement » devient « ## 0.1.1 — 2026-11-05 ».
     $heading = [regex]::new("(?m)^## $([regex]::Escape($newVersion))\b[^\r\n]*")
     Update-File "CHANGELOG.md" $heading.Replace((Read-Text "CHANGELOG.md"), "## $newVersion — $(Get-Date -Format 'yyyy-MM-dd')", 1)
+}
+
+# Canal bêta : publie ce latest.json dans la release technique, sauf si elle annonce
+# déjà une version plus récente (ex. une bêta 0.3.0-beta.1 après une stable 0.2.1).
+function Update-BetaChannel([string] $latestJson, [System.Management.Automation.SemanticVersion] $newVersion) {
+    try {
+        $currentBeta = [System.Management.Automation.SemanticVersion] (Invoke-RestMethod $BetaLatestUrl).version
+    }
+    catch {
+        $currentBeta = $null # pas encore de canal bêta
+    }
+    if ($currentBeta -and $currentBeta -gt $newVersion) {
+        Write-Host "Canal bêta inchangé : il annonce déjà $currentBeta."
+        return
+    }
+    gh release view $BetaTag --repo $Repo *> $null
+    if ($LASTEXITCODE -ne 0) {
+        gh release create $BetaTag --repo $Repo --prerelease --target main --title "Canal bêta (fichier technique)" `
+            --notes "Contient le latest.json lu par les applications réglées sur le canal bêta. Ce n'est pas une version : rien à télécharger ici."
+        Assert-Native "Création de la release $BetaTag"
+    }
+    gh release upload $BetaTag $latestJson --clobber --repo $Repo
+    Assert-Native "Mise à jour du canal bêta"
+    Write-Host "Canal bêta : $newVersion"
 }
 
 function Get-ReleaseNotes([string] $forVersion) {
@@ -201,6 +231,9 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw "La release GitHub n'a pas été créée (le tag $Tag est déjà poussé). Relance uniquement : gh $($releaseArgs -join ' ')"
     }
+
+    Step "Canal bêta"
+    Update-BetaChannel (Join-Path $out "latest.json") $semver
     Step "Version $Version publiée : https://github.com/$Repo/releases/tag/$Tag"
 }
 finally {

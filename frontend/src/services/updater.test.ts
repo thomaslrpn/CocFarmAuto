@@ -2,15 +2,29 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Plugins Tauri et API simulés : on vérifie l'ordre des étapes, pas le vrai téléchargement.
 const calls: string[] = [];
-vi.mock("@tauri-apps/api/core", () => ({ invoke: vi.fn(async (cmd: string) => { calls.push(`invoke:${cmd}`); }) }));
+const checkArgs: unknown[] = [];
+vi.mock("@tauri-apps/api/core", () => ({
+  invoke: vi.fn(async (cmd: string, args?: { channel: string }) => {
+    calls.push(`invoke:${cmd}`);
+    if (cmd !== "check_update") return undefined;
+    checkArgs.push(args);
+    // Canal bêta : une version est disponible ; canal stable : à jour.
+    return args?.channel === "beta" ? { rid: 7, version: "0.2.0-beta.1", currentVersion: "0.1.1" } : null;
+  }),
+}));
 vi.mock("@tauri-apps/plugin-process", () => ({ relaunch: vi.fn(async () => { calls.push("relaunch"); }) }));
-vi.mock("@tauri-apps/plugin-updater", () => ({ check: vi.fn() }));
+vi.mock("@tauri-apps/plugin-updater", () => ({
+  Update: class {
+    constructor(public metadata: { version: string }) {}
+    get version() { return this.metadata.version; }
+  },
+}));
 vi.mock("./api", () => ({
   api: { backupDatabase: vi.fn(async (label: string) => { calls.push(`backup:${label}`); return { path: "x" }; }) },
 }));
 
 import type { Update } from "@tauri-apps/plugin-updater";
-import { describeUpdateError, installUpdate, type InstallStep } from "./updater";
+import { checkForUpdate, describeUpdateError, installUpdate, type InstallStep } from "./updater";
 
 function fakeUpdate(failInstall = false) {
   return {
@@ -29,7 +43,16 @@ function fakeUpdate(failInstall = false) {
   } as unknown as Update;
 }
 
-beforeEach(() => { calls.length = 0; });
+beforeEach(() => { calls.length = 0; checkArgs.length = 0; });
+
+describe("vérification", () => {
+  it("interroge le canal demandé et construit l'objet Update", async () => {
+    expect(await checkForUpdate("stable")).toBeNull();
+    const beta = await checkForUpdate("beta");
+    expect(beta?.version).toBe("0.2.0-beta.1");
+    expect(checkArgs).toEqual([{ channel: "stable" }, { channel: "beta" }]);
+  });
+});
 
 describe("installation d'une mise à jour", () => {
   it("télécharge, sauvegarde, arrête le moteur puis installe (dans cet ordre)", async () => {

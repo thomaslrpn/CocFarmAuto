@@ -3,9 +3,10 @@
 //! - Affiche le dashboard React compilé.
 //! - Démarre le moteur d'analyse au lancement et l'arrête à la fermeture (voir backend.rs).
 //! - Une seule instance à la fois ; la taille et la position de la fenêtre sont mémorisées.
-//! - Mises à jour automatiques signées (le dashboard pilote le plugin updater).
+//! - Mises à jour automatiques signées, canal stable ou bêta (voir updates.rs).
 
 mod backend;
+mod updates;
 
 use backend::Backend;
 use tauri::{AppHandle, Manager, RunEvent};
@@ -42,7 +43,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             backend::backend_config,
-            backend::prepare_update
+            backend::prepare_update,
+            updates::check_update
         ])
         .build(tauri::generate_context!())
         .expect("erreur au lancement de CoC AutoFarm");
