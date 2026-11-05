@@ -34,7 +34,8 @@ export const NAV_ITEMS: NavItem[] = [
 export function Layout() {
   return (
     <div className="flex min-h-screen">
-      <nav className="flex w-56 shrink-0 flex-col border-r border-line bg-surface px-3 py-5">
+      {/* Menu fixe : collé en haut, hauteur de la fenêtre ; seul le contenu de droite défile. */}
+      <nav className="sticky top-0 flex h-screen w-56 shrink-0 flex-col overflow-y-auto border-r border-line bg-surface px-3 py-5">
         <div className="mb-6 flex items-center gap-2 px-2">
           <Swords aria-hidden className="size-6 text-accent" />
           <span className="text-lg font-semibold">CoC AutoFarm</span>
