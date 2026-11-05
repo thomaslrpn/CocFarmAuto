@@ -6,15 +6,13 @@ si le fichier existe (sinon valeurs par défaut). La page Paramètres du dashboa
 """
 from __future__ import annotations
 
-import logging
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, Field, ValidationError, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 from app.analysis.village_analysis import Loot, Resource
-
-logger = logging.getLogger(__name__)
+from app.config import load_user_json
 
 PREFERENCES_FILE = "preferences.json"
 
@@ -71,11 +69,4 @@ class ScoringPreferences(BaseModel):
 
 def load_preferences(data_dir: Path) -> ScoringPreferences:
     """Charge les préférences de l'utilisateur ; valeurs par défaut si absent ou invalide."""
-    path = data_dir / PREFERENCES_FILE
-    if not path.is_file():
-        return ScoringPreferences()
-    try:
-        return ScoringPreferences.model_validate_json(path.read_text(encoding="utf-8"))
-    except (ValidationError, ValueError) as exc:
-        logger.error("Préférences invalides dans %s, valeurs par défaut utilisées : %s", path, exc)
-        return ScoringPreferences()
+    return load_user_json(data_dir, PREFERENCES_FILE, ScoringPreferences)

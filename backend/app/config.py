@@ -6,10 +6,17 @@ jour ne les écrasent jamais (cahier des charges §13.6).
 """
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TypeVar
+
+from pydantic import BaseModel, ValidationError
+
+logger = logging.getLogger(__name__)
+ModelT = TypeVar("ModelT", bound=BaseModel)
 
 APP_NAME = "CoC AutoFarm"
 APP_VERSION = "0.1.0"
@@ -49,3 +56,19 @@ class Settings:
             screenshots_dir=data_dir / "screenshots",
             observations_dir=data_dir / "observations",
         )
+
+
+def load_user_json(data_dir: Path, filename: str, model: type[ModelT]) -> ModelT:
+    """Charge un réglage utilisateur (JSON validé par Pydantic) depuis le dossier de données.
+
+    Fichier absent ou invalide -> valeurs par défaut du modèle (l'erreur est journalisée :
+    un fichier corrompu ne doit jamais empêcher le logiciel de démarrer).
+    """
+    path = data_dir / filename
+    if not path.is_file():
+        return model()
+    try:
+        return model.model_validate_json(path.read_text(encoding="utf-8"))
+    except (ValidationError, ValueError, OSError) as exc:
+        logger.error("Réglages invalides dans %s, valeurs par défaut utilisées : %s", path, exc)
+        return model()

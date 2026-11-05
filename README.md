@@ -51,3 +51,20 @@ Préférences (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\preferences.json`, par e
 }
 ```
 `priority` : `balanced`, `gold`, `elixir` ou `dark_elixir`.
+
+## Phase 4 — Stratégies (simulation théorique)
+
+```powershell
+python -m app.simulate_cli           # compare les stratégies sur les villages observés
+```
+
+Hypothèses (optionnel) : `%LOCALAPPDATA%\CoCAutoFarm\simulation.json`, par exemple :
+
+```json
+{
+  "capture_rates": {"gold": 0.75, "elixir": 0.75, "dark_elixir": 0.75},
+  "attack_duration_s": 180,
+  "army_ready_delay_s": 0,
+  "search_cost_gold": 1500
+}
+```
