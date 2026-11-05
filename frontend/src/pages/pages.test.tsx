@@ -54,6 +54,13 @@ describe("changelog", () => {
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
     expect(screen.queryByText("Changelog")).not.toBeInTheDocument(); // titre principal omis
   });
+
+  it("rattache une ligne indentée à l'élément de liste précédent", () => {
+    render(<Changelog markdown={"- Mises à jour signées,\n  avec sauvegarde\n- Autre"} />);
+    const items = screen.getAllByRole("listitem");
+    expect(items).toHaveLength(2);
+    expect(items[0]).toHaveTextContent("Mises à jour signées, avec sauvegarde");
+  });
 });
 
 describe("page Paramètres", () => {

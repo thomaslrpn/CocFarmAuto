@@ -25,6 +25,8 @@ export function Changelog({ markdown }: { markdown: string }) {
   for (const raw of markdown.split(/\r?\n/)) {
     const line = raw.trim();
     if (line.startsWith("- ")) { list.push(line.slice(2)); continue; }
+    // Ligne indentée juste après un élément de liste : suite de cet élément.
+    if (line && /^\s/.test(raw) && list.length) { list[list.length - 1] += ` ${line}`; continue; }
     if (line && !line.startsWith("#")) { paragraph.push(line); continue; }
     flush();
     if (!line || line.startsWith("# ")) continue; // le titre principal est déjà celui de la carte

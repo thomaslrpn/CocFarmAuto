@@ -163,3 +163,22 @@ cd desktop
 Dans l'application : page **À propos** → « Rechercher des mises à jour ». Vérification automatique
 15 s après le démarrage puis toutes les 6 h ; un encadré apparaît dans le menu quand une version est
 disponible. Avant l'installation : sauvegarde de la base (`backups/…_avant-maj-<version>.db`) et arrêt du moteur.
+
+### Publier une nouvelle version
+
+Prérequis (une fois) : GitHub CLI — `winget install GitHub.cli`, puis `gh auth login`.
+
+1. Pendant le développement, noter les changements dans `CHANGELOG.md` sous une section
+   `## 0.1.1 — en développement` (elle devient les notes de version).
+2. Tout commiter, puis depuis `desktop\` :
+
+```powershell
+.\scripts\release.ps1 -Version 0.1.1 -DryRun      # essai complet, rien n'est publié
+.\scripts\release.ps1 -Version 0.1.1              # publication stable
+.\scripts\release.ps1 -Version 0.2.0-beta.1 -Prerelease   # bêta (invisible pour le canal stable)
+```
+
+Le script vérifie le dépôt, écrit la version partout (un test vérifie qu'elles sont identiques),
+date le changelog, lance tous les tests, compile et signe, prépare `releases\v<version>\`
+(installateur, `latest.json`, notes), commite « Version x.y.z », pose le tag `vx.y.z`, pousse
+et crée la release GitHub. Les applications installées la proposent à leur prochaine vérification.
