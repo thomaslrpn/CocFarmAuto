@@ -5,7 +5,8 @@
   "scripts": {
     "tauri": "tauri",
     "dev": "tauri dev",
-    "build": "tauri build"
+    "build": "tauri build --config src-tauri/tauri.release.conf.json",
+    "build:backend": "..\\backend\\.venv\\Scripts\\python.exe -m PyInstaller --noconfirm --log-level WARN --distpath ..\\backend\\dist --workpath ..\\backend\\build ..\\backend\\backend.spec"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.4"

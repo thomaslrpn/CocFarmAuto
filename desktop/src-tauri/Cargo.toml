@@ -17,6 +17,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Jeton aléatoire du moteur (générateur cryptographique du système).
+getrandom = "0.3"
 
 [profile.release]
 # Exécutable plus petit et plus rapide pour la distribution.

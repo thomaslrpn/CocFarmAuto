@@ -134,4 +134,8 @@ npm run dev        # fenêtre de développement (lance aussi le serveur Vite du 
 npm run build      # version de production (desktop/src-tauri/target/release)
 ```
 
-Étape 7.1 : le moteur se lance encore à la main (`python -m app.main`) ; la fenêtre demande son jeton au premier lancement.
+L'application démarre elle-même le moteur (port libre, jeton aléatoire) et l'arrête à la fermeture :
+plus besoin de terminal ni de jeton. En développement (`npm run dev`), elle utilise le Python de `backend/.venv`.
+
+`npm run build` enchaîne : moteur (PyInstaller, `pip install -r backend/requirements-build.txt` requis),
+dashboard, application optimisée, puis installateur `src-tauri/target/release/bundle/nsis/*-setup.exe`.

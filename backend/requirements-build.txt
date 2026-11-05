@@ -1,0 +1,3 @@
+# Outils de construction de l'application (pas nécessaires pour développer le moteur).
+-r requirements.txt
+pyinstaller==6.22.3

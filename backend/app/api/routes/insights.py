@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel, ValidationError
 from sqlalchemy import func, select
@@ -136,3 +136,13 @@ def update_settings(
     )
     save_user_settings(session, new)
     return UserSettingsModel(preferences=new.preferences, simulation=new.simulation, app=new.app)
+
+
+@router.post("/shutdown", tags=["moteur"], status_code=202,
+             summary="Arrêter proprement le moteur (utilisé par l'application de bureau)")
+def shutdown(background: BackgroundTasks, context: AppContext = Depends(get_context)) -> dict[str, str]:
+    if context.request_shutdown is None:
+        raise HTTPException(409, "Arrêt à distance indisponible pour ce moteur")
+    # Après l'envoi de la réponse : l'appelant reçoit sa confirmation avant l'arrêt.
+    background.add_task(context.request_shutdown)
+    return {"status": "stopping"}

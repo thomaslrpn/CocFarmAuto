@@ -8,7 +8,7 @@ Ainsi, une page web ouverte dans le navigateur ne peut pas interroger l'API.
 from __future__ import annotations
 
 import secrets
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 
 from fastapi import Depends, HTTPException, Query, Request, status
@@ -30,6 +30,7 @@ class AppContext:
     token: str
     vision_ready: bool  # modèles de reconnaissance présents
     observer: ObserverService | None = None  # None si la vision n'est pas prête
+    request_shutdown: Callable[[], None] | None = None  # arrêt propre du moteur (application de bureau)
 
 
 _bearer = HTTPBearer(auto_error=False, description="Jeton affiché au démarrage du backend")

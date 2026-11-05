@@ -85,3 +85,39 @@ describe("VillageTable", () => {
     expect(screen.getByText("Rien ici")).toBeInTheDocument();
   });
 });
+
+describe("TokenGate (application de bureau)", () => {
+  afterEach(() => {
+    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+  });
+
+  function fakeDesktop(invoke: (cmd: string) => Promise<unknown>) {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = { invoke, transformCallback: () => 0 };
+  }
+
+  it("se connecte tout seul avec la configuration fournie par l'application", async () => {
+    fakeDesktop(async () => ({ url: "http://127.0.0.1:50123", token: "auto" }));
+    const fetch = vi.fn(async () => ({ ok: true, status: 200, json: async () => ({}) }) as Response);
+    vi.stubGlobal("fetch", fetch);
+    render(<TokenGate>contenu protégé</TokenGate>);
+    expect(await screen.findByText("contenu protégé")).toBeInTheDocument();
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://127.0.0.1:50123/api/status");
+    expect(new Headers(init.headers).get("Authorization")).toBe("Bearer auto");
+  });
+
+  it("affiche l'écran de démarrage tant que le moteur ne répond pas", async () => {
+    fakeDesktop(async () => ({ url: "http://127.0.0.1:50124", token: "auto" }));
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("Failed to fetch"); }));
+    render(<TokenGate>contenu protégé</TokenGate>);
+    expect(await screen.findByText("Démarrage du moteur d'analyse…")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Jeton d'accès au moteur")).not.toBeInTheDocument(); // jamais de saisie
+  });
+
+  it("explique l'échec de lancement du moteur", async () => {
+    fakeDesktop(async () => { throw "moteur introuvable : backend.exe"; });
+    render(<TokenGate>contenu protégé</TokenGate>);
+    expect(await screen.findByText("Le moteur d'analyse n'a pas pu démarrer")).toBeInTheDocument();
+    expect(screen.getByText(/moteur introuvable/)).toBeInTheDocument();
+  });
+});

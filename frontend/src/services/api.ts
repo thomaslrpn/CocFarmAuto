@@ -18,7 +18,16 @@ import type {
 } from "../types/api";
 import { getToken } from "./auth";
 
-export const API_URL: string = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8765";
+let apiUrl: string = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8765";
+
+export function getApiUrl(): string {
+  return apiUrl;
+}
+
+/** Application de bureau : adresse fournie au démarrage (le port est choisi automatiquement). */
+export function setApiUrl(url: string): void {
+  apiUrl = url;
+}
 
 export class ApiError extends Error {
   constructor(
@@ -39,7 +48,7 @@ export class ApiError extends Error {
 /** Le backend ne répond pas du tout (arrêté, mauvais port...). */
 export class BackendUnreachableError extends Error {
   constructor() {
-    super(`Backend injoignable sur ${API_URL} (lance : python -m app.main)`);
+    super(`Moteur d'analyse injoignable (${apiUrl})`);
     this.name = "BackendUnreachableError";
   }
 }
@@ -47,7 +56,7 @@ export class BackendUnreachableError extends Error {
 type Query = Record<string, string | number | undefined>;
 
 function buildUrl(path: string, query?: Query): string {
-  const url = new URL(`/api${path}`, API_URL);
+  const url = new URL(`/api${path}`, apiUrl);
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
   }

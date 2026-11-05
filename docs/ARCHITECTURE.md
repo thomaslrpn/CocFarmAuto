@@ -66,3 +66,11 @@ Phases 1–9 du cahier des charges. Estimation : P1 (≈1 sem.), P2 vision (2–
 - Sauvegarde automatique avant toute migration d'une base existante (`backups/`, 5 dernières conservées). Une base plus récente que le logiciel est refusée (pas de retour arrière silencieux).
 - Un test vérifie que `models.py` correspond exactement au schéma produit par les migrations.
 - Le mode observation enregistre directement en base ; `db_cli import` importe les observations JSON existantes (sans doublon).
+
+## 9. Application de bureau — décisions (phase 7)
+
+- Moteur embarqué : PyInstaller en mode **onedir** (`backend.exe` + `_internal/`, ~180 Mo, démarrage ~1 s), livré comme **ressource** Tauri (`bundle.resources`) plutôt que `externalBin`, qui ne gère qu'un fichier unique.
+- Lancement par Rust (`src-tauri/src/backend.rs`) : port libre choisi par le système, jeton de 32 octets aléatoires, transmis au moteur par variable d'environnement et au dashboard par la commande `backend_config`. Pas de console (CREATE_NO_WINDOW).
+- Arrêt : `POST /api/shutdown` à la fermeture, arrêt forcé après 8 s. Le moteur surveille aussi le processus parent (`--parent-pid`) : il s'arrête si l'application disparaît brutalement.
+- En développement, la même logique lance `python -m app.main` du venv ; la configuration de production (`tauri.release.conf.json`) ajoute la construction du moteur et sa copie dans l'installateur.
+- CSP de la fenêtre : connexions limitées à `127.0.0.1`.

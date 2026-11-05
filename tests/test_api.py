@@ -218,3 +218,18 @@ def test_app_preferences_setting(client):
     updated = put_settings(client, {"app": {"observe_interval_s": 0.5}}).json()
     assert updated["app"]["observe_interval_s"] == 0.5
     assert put_settings(client, {"app": {"observe_interval_s": 0.01}}).status_code == 422
+
+
+def test_shutdown_endpoint(ctx, tmp_path):
+    calls = []
+    context = AppContext(settings=ctx.settings, db=ctx.db, token=TOKEN, vision_ready=True,
+                         request_shutdown=lambda: calls.append("stop"))
+    with TestClient(create_app(context)) as c:
+        assert c.post("/api/shutdown").status_code == 401
+        response = c.post("/api/shutdown", headers=AUTH)
+        assert response.status_code == 202 and response.json() == {"status": "stopping"}
+    assert calls == ["stop"]
+
+
+def test_shutdown_unavailable_without_callback(client):
+    assert client.post("/api/shutdown", headers=AUTH).status_code == 409
