@@ -10,12 +10,12 @@ import logging
 import sys
 from pathlib import Path
 
-from app.analysis.scoring import load_preferences
 from app.analysis.village_analysis import Resource
 from app.config import Settings
 from app.observer import load_observations
 from app.strategy.simulator import SimulationResult, compare_strategies
-from app.strategy.strategies import ASSUMPTIONS_FILE, DEFAULT_STRATEGIES, load_assumptions
+from app.strategy.strategies import DEFAULT_STRATEGIES
+from app.user_settings import load_from_app_settings
 
 
 def fmt(n: float) -> str:
@@ -50,18 +50,18 @@ def main() -> int:
     if not sheets:
         print(f"Aucun village observé dans {args.dir} (lance python -m app.observe_cli)", file=sys.stderr)
         return 1
-    prefs = load_preferences(settings.data_dir)
-    assumptions = load_assumptions(settings.data_dir)
+    user = load_from_app_settings(settings)
+    prefs, assumptions = user.preferences, user.simulation
     results, search_time = compare_strategies(DEFAULT_STRATEGIES, sheets, prefs, assumptions)
 
     print(f"Simulation théorique sur {len(sheets)} village(s) observé(s) - aucune attaque réelle.\n")
     print_comparison(results)
     print_detail(results[0])
-    print("\nHypothèses (réglables dans " + str(settings.data_dir / ASSUMPTIONS_FILE) + ") :")
+    print("\nHypothèses (réglables via l'API : PUT /api/settings) :")
     for line in assumptions.describe(search_time):
         print(f"  {line}")
     if not any(prefs.army_cost.get(r) for r in Resource):
-        print("  [non configuré] coût de l'armée = 0 : butin net surestimé (army_cost dans preferences.json)")
+        print("  [non configuré] coût de l'armée = 0 : butin net surestimé (army_cost dans les préférences)")
     print("\npoints/h : valeur du butin net selon tes préférences (100 points = butin visé atteint).")
     return 0
 

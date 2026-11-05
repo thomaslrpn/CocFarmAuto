@@ -10,13 +10,13 @@ import argparse
 import logging
 import sys
 
-from app.analysis.scoring import load_preferences
 from app.config import Settings
 from app.database.database import Database
 from app.database.importer import import_observations
 from app.database.migrations import MigrationError, backup_database
 from app.database.repository import count_villages, daily_statistics, recent_villages
 from app.strategy.strategies import strategy_label
+from app.user_settings import load_user_settings
 
 
 def fmt(n: float) -> str:
@@ -24,7 +24,9 @@ def fmt(n: float) -> str:
 
 
 def cmd_import(db: Database, settings: Settings) -> None:
-    report = import_observations(db, settings.observations_dir, load_preferences(settings.data_dir))
+    with db.session() as session:
+        prefs = load_user_settings(session, settings.data_dir).preferences
+    report = import_observations(db, settings.observations_dir, prefs)
     print(f"{report.found} observation(s) trouvée(s) : {report.imported} importée(s), "
           f"{report.already_present} déjà présente(s).")
 

@@ -11,7 +11,7 @@ import logging
 import sys
 import time
 
-from app.analysis.scoring import ScoringPreferences, load_preferences
+from app.analysis.scoring import ScoringPreferences
 from app.analysis.village_analysis import sheet_from_frame
 from app.capture.screen import CaptureError, grab_window
 from app.capture.window import WindowNotSupportedError, find_window
@@ -20,6 +20,7 @@ from app.database.database import Database
 from app.database.migrations import MigrationError
 from app.database.repository import refresh_daily_statistics, save_evaluation
 from app.observer import ObserverStats, ScoutRecorder
+from app.user_settings import load_user_settings
 from app.strategy.advisor import evaluate_village
 from app.strategy.strategies import strategy_label
 from app.vision.frame import VisionModels, analyze_frame
@@ -92,7 +93,8 @@ def main() -> int:
         return 1
 
     recorder = ScoutRecorder(settings.observations_dir)
-    prefs = load_preferences(settings.data_dir)
+    with db.session() as session:
+        prefs = load_user_settings(session, settings.data_dir).preferences
     stats = ObserverStats()
     print(f"Observation en cours (toutes les {args.interval} s). Enregistrement dans :")
     print(f"  {settings.observations_dir}")

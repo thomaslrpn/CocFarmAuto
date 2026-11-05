@@ -79,3 +79,13 @@ python -m app.db_cli backup           # sauvegarde manuelle
 
 Base : `%LOCALAPPDATA%\CoCAutoFarmutofarm.db` ; sauvegardes : `%LOCALAPPDATA%\CoCAutoFarmackups`.
 Le mode observation enregistre désormais chaque village directement en base.
+
+## Phase 5.2 — API locale
+
+```powershell
+python -m app.main                   # démarre l'API sur http://127.0.0.1:8765 (Ctrl+C pour arrêter)
+```
+
+- Documentation interactive : http://127.0.0.1:8765/docs → bouton **Authorize** → coller le jeton affiché au démarrage.
+- L'API n'écoute que ce PC et exige le jeton (en-tête `Authorization: Bearer <jeton>`, ou `?token=` pour les images).
+- Les réglages modifiés via `PUT /api/settings` sont enregistrés en base et utilisés par toutes les commandes.

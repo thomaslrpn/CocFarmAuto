@@ -15,7 +15,7 @@ from __future__ import annotations
 import statistics
 from collections.abc import Sequence
 
-from pydantic import BaseModel
+from pydantic import BaseModel, computed_field
 
 from app.analysis.profitability import compute_profitability
 from app.analysis.scoring import ScoringPreferences
@@ -48,6 +48,7 @@ class SimulationResult(BaseModel):
     net_per_hour: SignedLoot
     points_per_hour: float  # valeur du butin net selon les préférences, par heure
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def skip_rate(self) -> float:
         return 1 - self.attacks / self.villages_seen if self.villages_seen else 0.0
@@ -63,8 +64,7 @@ def measure_search_time(sheets: Sequence[VillageSheet]) -> float | None:
 
 def loot_points(loot: SignedLoot, prefs: ScoringPreferences) -> float:
     """Valeur d'un butin sur l'échelle du score (non plafonnée, peut être négative)."""
-    weights = prefs.weights()
-    return sum(100 * weights[r] * loot.get(r) / prefs.target_loot.get(r) for r in Resource)
+    return prefs.loot_value(loot.gold, loot.elixir, loot.dark_elixir)
 
 
 def simulate(

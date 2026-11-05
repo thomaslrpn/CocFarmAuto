@@ -90,7 +90,7 @@ def compute_profitability(sheet: VillageSheet, prefs: ScoringPreferences | None 
 
     warnings: list[str] = []
     if not any(prefs.army_cost.get(r) for r in Resource):
-        warnings.append("coût de l'armée non configuré : rentabilité brute (army_cost dans preferences.json)")
+        warnings.append("coût de l'armée non configuré : rentabilité brute (army_cost dans les préférences)")
     if sheet.detection_confidence < MIN_RELIABLE_CONFIDENCE:
         warnings.append(f"lecture du butin incertaine (confiance {sheet.detection_confidence:.2f})")
 

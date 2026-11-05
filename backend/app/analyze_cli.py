@@ -11,10 +11,11 @@ import sys
 from pathlib import Path
 
 from app.analysis.profitability import ProfitabilityResult, compute_profitability
-from app.analysis.scoring import PREFERENCES_FILE, ScoringPreferences, load_preferences
+from app.analysis.scoring import ScoringPreferences
 from app.analysis.village_analysis import VillageSheet
 from app.config import Settings
 from app.observer import load_observations
+from app.user_settings import load_from_app_settings
 
 
 def fmt(n: int) -> str:
@@ -38,15 +39,20 @@ def main() -> int:
                         help="détailler le calcul des N meilleurs villages (défaut : 1)")
     args = parser.parse_args()
 
-    prefs = load_preferences(settings.data_dir)
+    prefs = load_from_app_settings(settings).preferences
     if prefs == ScoringPreferences():
-        print(f"Préférences par défaut (personnalisables dans {settings.data_dir / PREFERENCES_FILE})")
+        print("Préférences par défaut (personnalisables via l'API : PUT /api/settings)")
     sheets = load_observations(args.dir)
     if not sheets:
         print(f"Aucun village observé dans {args.dir} (lance python -m app.observe_cli)", file=sys.stderr)
         return 1
 
-    ranked = sorted(((s, compute_profitability(s, prefs)) for s in sheets), key=lambda p: -p[1].score)
+    # Égalité de score (ex. plusieurs 100/100) : départage par la valeur NON plafonnée du butin.
+    ranked = sorted(
+        ((s, compute_profitability(s, prefs)) for s in sheets),
+        key=lambda p: (p[1].score, prefs.loot_value(p[0].loot.gold, p[0].loot.elixir, p[0].loot.dark_elixir)),
+        reverse=True,
+    )
     print_ranking(ranked)
     for sheet, result in ranked[: max(0, args.explain)]:
         print(f"\nDétail - village de {sheet.analyzed_at:%H:%M:%S} ({sheet.source_image}) :")

@@ -9,6 +9,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.analysis.scoring import ScoringPreferences
+from app.analysis.village_analysis import Loot, VillageSheet, build_sheet
 from app.config import APP_VERSION
 from app.database.models import Analysis, DailyStatistics, Setting, Village
 from app.strategy.advisor import VillageEvaluation
@@ -99,3 +100,16 @@ def set_setting(session: Session, name: str, value: Any) -> None:
         session.add(Setting(name=name, value=encoded))
     else:
         setting.value = encoded
+
+
+def loot_rows(session: Session) -> list[tuple[int, int, int]]:
+    """(or, élixir, noir) de tous les villages : population du score relatif."""
+    return [tuple(row) for row in session.execute(select(Village.gold, Village.elixir, Village.dark_elixir))]
+
+
+def village_to_sheet(village: Village) -> VillageSheet:
+    """Village en base -> fiche d'analyse (pour la simulation)."""
+    return build_sheet(
+        Loot(gold=village.gold, elixir=village.elixir, dark_elixir=village.dark_elixir),
+        village.detection_confidence, village.analyzed_at, village.source_image,
+    )

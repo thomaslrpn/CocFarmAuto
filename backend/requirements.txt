@@ -7,3 +7,4 @@ fastapi>=0.110
 uvicorn>=0.29
 SQLAlchemy>=2.0
 pytest>=8.0
+httpx>=0.27            # requis par fastapi.testclient (tests de l'API)

@@ -66,6 +66,16 @@ class ScoringPreferences(BaseModel):
         total = sum(raw.values())
         return {r: w / total for r, w in raw.items()} if total else raw
 
+    def loot_value(self, gold: float, elixir: float, dark_elixir: float) -> float:
+        """Valeur d'un butin sur l'échelle du score, SANS plafond (peut dépasser 100).
+
+        Sert à départager des villages qui ont tous 100/100, et à comparer des
+        butins nets (qui peuvent être négatifs) dans la simulation.
+        """
+        weights = self.weights()
+        amounts = {Resource.GOLD: gold, Resource.ELIXIR: elixir, Resource.DARK_ELIXIR: dark_elixir}
+        return sum(100 * weights[r] * amounts[r] / self.target_loot.get(r) for r in Resource)
+
 
 def load_preferences(data_dir: Path) -> ScoringPreferences:
     """Charge les préférences de l'utilisateur ; valeurs par défaut si absent ou invalide."""
