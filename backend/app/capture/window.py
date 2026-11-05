@@ -30,8 +30,37 @@ class WindowRect:
         return {"left": self.left, "top": self.top, "width": self.width, "height": self.height}
 
 
-def find_window(title_fragment: str) -> WindowRect | None:
-    """Retourne la zone de la 1re fenêtre visible dont le titre contient
+@dataclass(frozen=True)
+class GameWindow:
+    """Fenêtre trouvée : son handle Win32 (pour PrintWindow) et sa zone cliente à l'écran."""
+
+    hwnd: int
+    title: str
+    rect: WindowRect
+
+
+def ensure_dpi_awareness() -> None:
+    """Rend le processus « DPI aware » pour obtenir des coordonnées en vrais pixels.
+
+    Sans ça, avec une mise à l'échelle Windows de 125 % / 150 %, Windows renvoie
+    des tailles « virtuelles » et la capture serait décalée ou floue.
+    """
+    if sys.platform != "win32":
+        return
+    import ctypes
+
+    try:
+        # -4 = DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 (Windows 10 1703+)
+        ctypes.windll.user32.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+    except (AttributeError, OSError):
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except (AttributeError, OSError):
+            logger.debug("Impossible de régler la DPI awareness", exc_info=True)
+
+
+def find_window(title_fragment: str) -> GameWindow | None:
+    """Retourne la 1re fenêtre visible (non réduite) dont le titre contient
     `title_fragment` (insensible à la casse), ou None si introuvable."""
     if sys.platform != "win32":
         raise WindowNotSupportedError("find_window nécessite Windows")
@@ -39,9 +68,10 @@ def find_window(title_fragment: str) -> WindowRect | None:
     import ctypes
     from ctypes import wintypes
 
+    ensure_dpi_awareness()
     user32 = ctypes.windll.user32
     needle = title_fragment.lower()
-    found: list[WindowRect] = []
+    found: list[GameWindow] = []
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
     def _callback(hwnd, _lparam):  # type: ignore[no-untyped-def]
@@ -60,7 +90,7 @@ def find_window(title_fragment: str) -> WindowRect | None:
             user32.ClientToScreen(hwnd, ctypes.byref(origin))
             w, h = rect.right - rect.left, rect.bottom - rect.top
             if w > 0 and h > 0:
-                found.append(WindowRect(origin.x, origin.y, w, h))
+                found.append(GameWindow(int(hwnd), buf.value, WindowRect(origin.x, origin.y, w, h)))
                 return False  # stop l'énumération
         return True
 

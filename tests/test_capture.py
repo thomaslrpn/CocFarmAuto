@@ -1,14 +1,9 @@
-import sys
-from pathlib import Path
-
 import pytest
 from PIL import Image
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "backend"))
-
-from app.capture.screen import CaptureError, grab_region, save_capture  # noqa: E402
-from app.capture.window import WindowRect  # noqa: E402
-from app.config import Settings  # noqa: E402
+from app.capture.screen import CaptureError, CaptureMethod, grab_region, grab_window, is_blank, save_capture
+from app.capture.window import GameWindow, WindowRect
+from app.config import Settings
 
 
 def test_save_capture_writes_timestamped_png(tmp_path):
@@ -33,3 +28,42 @@ def test_settings_use_env_override(monkeypatch, tmp_path):
     s = Settings.load()
     assert s.data_dir == tmp_path
     assert s.screenshots_dir == tmp_path / "screenshots"
+
+
+def test_is_blank_detects_black_image():
+    assert is_blank(Image.new("RGB", (20, 20), "black"))
+    assert not is_blank(Image.new("RGB", (20, 20), (90, 140, 200)))
+
+
+def _fake_window() -> GameWindow:
+    return GameWindow(hwnd=1, title="Clash of Clans", rect=WindowRect(0, 0, 10, 10))
+
+
+def test_grab_window_falls_back_to_screen_when_printwindow_is_black(monkeypatch):
+    import app.capture.screen as screen
+
+    screen_image = Image.new("RGB", (10, 10), "blue")
+    monkeypatch.setattr(screen, "print_window", lambda *a: Image.new("RGB", (10, 10), "black"))
+    monkeypatch.setattr(screen, "grab_region", lambda rect: screen_image)
+
+    image, used = grab_window(_fake_window(), CaptureMethod.AUTO)
+    assert used is CaptureMethod.SCREEN and image is screen_image
+
+
+def test_grab_window_prefers_printwindow(monkeypatch):
+    import app.capture.screen as screen
+
+    window_image = Image.new("RGB", (10, 10), "green")
+    monkeypatch.setattr(screen, "print_window", lambda *a: window_image)
+    monkeypatch.setattr(screen, "grab_region", lambda rect: pytest.fail("ne doit pas capturer l'écran"))
+
+    image, used = grab_window(_fake_window(), CaptureMethod.AUTO)
+    assert used is CaptureMethod.WINDOW and image is window_image
+
+
+def test_grab_window_strict_mode_raises_on_black(monkeypatch):
+    import app.capture.screen as screen
+
+    monkeypatch.setattr(screen, "print_window", lambda *a: Image.new("RGB", (10, 10), "black"))
+    with pytest.raises(CaptureError):
+        grab_window(_fake_window(), CaptureMethod.WINDOW)
